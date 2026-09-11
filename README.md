@@ -21,40 +21,47 @@ MediMind AI helps people understand symptoms, analyze lab reports, and navigate 
 ```
 medimind/
 │
-├── frontend/           # Frontend application
-│   ├── app/            # Main app component and routing
-│   ├── components/     # Reusable UI components
-│   ├── contexts/       # React contexts (language, auth)
-│   ├── data/           # Static data and translations
-│   ├── features/       # Feature modules
-│   │   ├── home/       # Home page
-│   │   ├── symptoms/   # Symptom checker
-│   │   ├── lab/        # Lab report analyzer
-│   │   └── timeline/   # Health timeline
-│   ├── hooks/          # Custom React hooks
-│   ├── lib/            # Utility libraries
-│   ├── services/       # API service layer
-│   ├── theme/          # Theme configuration
-│   ├── types/          # TypeScript type definitions
-│   ├── utils/          # Utility functions
-│   ├── public/         # Static assets
-│   └── tests/          # Test files
+├── frontend/                 # Frontend React application
+│   ├── app/                  # Main app component and routing
+│   ├── components/           # Reusable UI components
+│   ├── contexts/             # React contexts (language, auth)
+│   ├── data/                 # Static data and translations
+│   ├── features/             # Feature modules
+│   │   ├── home/             # Home page
+│   │   ├── symptoms/         # Symptom checker
+│   │   ├── lab/              # Lab report analyzer
+│   │   └── timeline/         # Health timeline
+│   ├── hooks/                # Custom React hooks
+│   ├── lib/                  # Utility libraries
+│   ├── services/             # API service layer
+│   ├── theme/                # Theme configuration
+│   ├── types/                # TypeScript type definitions
+│   ├── utils/                # Utility functions
+│   ├── public/               # Static assets
+│   └── tests/                # Test files
 │
-├── backend/            # Backend services
-│   ├── api/            # API route handlers
-│   ├── services/       # Business logic
-│   ├── models/         # Data models
-│   ├── middleware/      # Auth & validation
-│   ├── utils/          # Backend utilities
-│   └── config/         # Configuration
+├── backend/                  # Backend Node.js/Express API
+│   ├── src/
+│   │   ├── controllers/      # Request handlers
+│   │   ├── routes/           # Route definitions
+│   │   ├── services/         # Business logic
+│   │   ├── middleware/        # Auth, validation, error handling
+│   │   ├── validators/       # Zod validation schemas
+│   │   ├── ai/               # AI/ML integration
+│   │   ├── security/         # JWT, encryption, sanitization
+│   │   ├── utils/            # Helper functions
+│   │   ├── config/           # Configuration
+│   │   └── types/            # TypeScript types
+│   ├── tests/                # Backend tests
+│   └── package.json
 │
-├── database/           # Database schemas & migrations
-│   ├── schemas/        # SQL schema definitions
-│   ├── seeds/          # Seed data
-│   ├── migrations/     # Migration files
-│   └── functions/      # Stored procedures
+├── database/                 # Database schemas & migrations
+│   ├── schemas/              # SQL schema definitions
+│   ├── seeds/                # Seed data
+│   ├── migrations/           # Migration files
+│   └── functions/            # Stored procedures
 │
-├── docs/               # Documentation
+├── docs/                     # Documentation
 ├── README.md
 └── .env.example
 ```
@@ -75,6 +82,8 @@ npm install
 npm run dev
 ```
 
+Frontend will be available at `http://localhost:5173`
+
 ### Backend Setup
 
 ```bash
@@ -82,6 +91,8 @@ cd backend
 npm install
 npm run dev
 ```
+
+Backend will be available at `http://localhost:3001`
 
 ### Database Setup
 
@@ -126,12 +137,14 @@ psql -U postgres -d medimind -f seeds/001_sample_data.sql
 - Lucide React (icons)
 - React Router DOM
 
-### Backend (planned)
+### Backend
 - Node.js + Express
 - TypeScript
 - PostgreSQL
 - JWT Authentication
 - Zod validation
+- bcryptjs for password hashing
+- AES-256-GCM encryption
 
 ## 🌍 Internationalization
 
@@ -141,6 +154,34 @@ MediMind AI supports:
 
 Language can be toggled from the navigation bar.
 
+## 🔒 Security Features
+
+- JWT-based authentication
+- Password hashing with bcrypt
+- AES-256-GCM encryption for sensitive data
+- Input sanitization (XSS prevention)
+- SQL injection detection
+- Rate limiting
+- Helmet security headers
+- CORS configuration
+
+## 📊 API Endpoints
+
+### Authentication
+- `POST /api/auth/register` - Register new user
+- `POST /api/auth/login` - Login user
+- `GET /api/auth/profile` - Get user profile
+- `PUT /api/auth/profile` - Update user profile
+
+### Health Analysis
+- `POST /api/symptoms/analyze` - Analyze symptoms
+- `POST /api/lab/analyze` - Analyze lab reports
+
+### Timeline
+- `GET /api/timeline` - Get timeline entries
+- `POST /api/timeline` - Add timeline entry
+- `DELETE /api/timeline/:id` - Delete timeline entry
+
 ## ⚕️ Medical Disclaimer
 
 This application is for informational purposes only and is NOT a substitute for professional medical advice, diagnosis, or treatment. Always seek the advice of your physician or other qualified health provider with any questions about a medical condition.
@@ -148,3 +189,11 @@ This application is for informational purposes only and is NOT a substitute for 
 ## 📄 License
 
 MIT License - See LICENSE file for details.
+
+## 🤝 Contributing
+
+Contributions are welcome! Please read our contributing guidelines before submitting pull requests.
+
+## 📞 Support
+
+For support, email support@medimind.ai or join our Slack channel.
