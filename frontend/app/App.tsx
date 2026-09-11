@@ -1,9 +1,5 @@
-import { useState } from 'react';
+import { useState, lazy, Suspense } from 'react';
 import { LanguageProvider, useLanguage } from '../contexts/LanguageContext';
-import { HomePage } from '../features/home/HomePage';
-import { SymptomChecker } from '../features/symptoms/SymptomChecker';
-import { LabReport } from '../features/lab/LabReport';
-import { Timeline } from '../features/timeline/Timeline';
 import { 
   Heart, 
   FlaskConical, 
@@ -14,6 +10,24 @@ import {
   X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+
+// Code splitting with React.lazy for better performance
+const HomePage = lazy(() => import('../features/home/HomePage').then(module => ({ default: module.HomePage })));
+const SymptomChecker = lazy(() => import('../features/symptoms/SymptomChecker').then(module => ({ default: module.SymptomChecker })));
+const LabReport = lazy(() => import('../features/lab/LabReport').then(module => ({ default: module.LabReport })));
+const Timeline = lazy(() => import('../features/timeline/Timeline').then(module => ({ default: module.Timeline })));
+
+// Loading fallback component
+function PageLoader() {
+  return (
+    <div className="flex items-center justify-center min-h-[400px]" role="status" aria-label="Loading">
+      <div className="flex flex-col items-center gap-4">
+        <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+        <p className="text-sm text-text-secondary">Loading...</p>
+      </div>
+    </div>
+  );
+}
 
 type Page = 'home' | 'symptoms' | 'lab' | 'timeline';
 
@@ -38,6 +52,13 @@ function AppContent() {
       default: return <HomePage onNavigate={setCurrentPage} />;
     }
   };
+
+  // Wrap page rendering with Suspense for lazy loading
+  const renderPageWithSuspense = () => (
+    <Suspense fallback={<PageLoader />}>
+      {renderPage()}
+    </Suspense>
+  );
 
   return (
     <div 
@@ -155,7 +176,7 @@ function AppContent() {
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2 }}
           >
-            {renderPage()}
+            {renderPageWithSuspense()}
           </motion.div>
         </AnimatePresence>
       </main>
