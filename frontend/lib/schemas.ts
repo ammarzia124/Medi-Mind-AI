@@ -82,42 +82,54 @@ export type SymptomAnalysis = z.infer<typeof SymptomAnalysisSchema>;
 // ============================================================================
 
 export const LabResultStatusSchema = z.enum([
-  'within_reference_range',
-  'outside_reference_range',
-  'significantly_outside_range',
+  'normal',
+  'low',
+  'high',
+  'critical',
+  'unreadable',
 ]);
 
 export type LabResultStatus = z.infer<typeof LabResultStatusSchema>;
 
 export const LabResultItemSchema = z.object({
-  name: z.string().min(1).max(200),
-  value: z.string().min(1).max(50),
-  unit: z.string().max(50).default(''),
+  test_name: z.string().min(1).max(200),
+  result_value: z.string().min(1).max(50),
+  result_unit: z.string().max(50).optional(),
+  reference_range: z.string().max(100).optional(),
   status: LabResultStatusSchema,
-  what_this_may_mean: z.string().min(10).max(500),
+  confidence: z.number().min(0).max(1).optional(),
+  what_is_this: z.string().min(10).max(500),
+  what_it_means: z.string().min(10).max(500),
+  what_to_do: z.string().min(10).max(500),
 });
 
 export type LabResultItem = z.infer<typeof LabResultItemSchema>;
 
+export const OverallStatusSchema = z.enum([
+  'normal',
+  'some_abnormal',
+  'concerning',
+  'unreadable',
+]);
+
+export type OverallStatus = z.infer<typeof OverallStatusSchema>;
+
 export const LabAnalysisSchema = z.object({
-  severity: SeveritySchema,
-  urgency: UrgencySchema,
-  summary: z.string().min(10).max(1000),
+  report_date: z.string().optional(),
+  facility_name: z.string().optional(),
   results: z
     .array(LabResultItemSchema)
     .min(1, 'At least one lab result required')
     .max(20, 'Maximum 20 lab results'),
-  warning_signs: z
-    .array(z.string().min(5).max(300))
-    .min(1)
-    .max(10),
-  recommended_action: z.string().min(10).max(500),
-  next_steps: z
-    .array(z.string().min(3).max(200))
-    .min(1)
-    .max(10),
-  important_note: z.string().min(10).max(500),
-  disclaimer: z.string().min(10).max(500),
+  overall_status: OverallStatusSchema,
+  severity: SeveritySchema,
+  urgency: z.enum(['self_care', 'monitor', 'doctor_soon', 'urgent', 'emergency']),
+  summary: z.object({
+    in_simple_words: z.array(z.string().min(10)).min(3).max(5),
+  }),
+  disclaimer: z.string().min(50, 'Disclaimer required'),
+  confidence_score: z.number().min(0).max(1),
+  language: z.enum(['en', 'ur']),
 });
 
 export type LabAnalysis = z.infer<typeof LabAnalysisSchema>;

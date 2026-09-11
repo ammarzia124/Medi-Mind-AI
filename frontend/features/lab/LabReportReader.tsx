@@ -7,9 +7,18 @@ import {
   Stack,
   Alert,
   LinearProgress,
-  Divider,
   Container,
-  IconButton
+  Chip,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Card,
+  CardContent,
+  IconButton,
+  Collapse
 } from '@mui/material';
 import { 
   CloudUpload as UploadIcon,
@@ -18,7 +27,10 @@ import {
   ArrowBack as BackIcon,
   CheckCircle as CheckIcon,
   Warning as WarningIcon,
-  Error as ErrorIcon
+  Error as ErrorIcon,
+  ExpandMore as ExpandMoreIcon,
+  ExpandLess as ExpandLessIcon,
+  Info as InfoIcon
 } from '@mui/icons-material';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { colors } from '../../theme/designTokens';
@@ -27,16 +39,21 @@ import { labService } from '../../services/labService';
 import { useNavigate } from 'react-router-dom';
 import { validateFile } from '../../lib/security';
 
+type ProcessingStage = 'idle' | 'uploading' | 'reading' | 'analyzing' | 'complete' | 'error';
+
 export const LabReportReader: React.FC = () => {
-  const { t, language } = useLanguage();
+  const { language } = useLanguage();
   const navigate = useNavigate();
   
   const [file, setFile] = useState<File | null>(null);
-  const [manualInput, setManualInput] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [processingStage, setProcessingStage] = useState<ProcessingStage>('idle');
   const [result, setResult] = useState<LabAnalysis | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [dragActive, setDragActive] = useState(false);
+  const [expandedResults, setExpandedResults] = useState<Set<number>>(new Set());
+
+  const t = (en: string, ur: string) => language === 'en' ? en : ur;
 
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -80,58 +97,75 @@ export const LabReportReader: React.FC = () => {
   const handleRemoveFile = () => {
     setFile(null);
     setError(null);
+    setProcessingStage('idle');
+    setResult(null);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    const inputText = file ? file.name : manualInput;
-    
-    if (!inputText.trim()) {
-      setError(language === 'en' 
-        ? 'Please upload a file or enter lab results'
-        : 'براہ کرم فائل اپ لوڈ کریں یا لیب نتائج درج کریں'
-      );
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-    setResult(null);
+  const handleSubmit = async () => {
+    if (!file) return;
 
     try {
-      // Simulate file processing delay
+      setError(null);
+      setProcessingStage('uploading');
+      setUploadProgress(0);
+
+      // Simulate upload progress
+      const uploadInterval = setInterval(() => {
+        setUploadProgress(prev => {
+          if (prev >= 100) {
+            clearInterval(uploadInterval);
+            return 100;
+          }
+          return prev + 10;
+        });
+      }, 200);
+
       await new Promise(resolve => setTimeout(resolve, 2000));
+      clearInterval(uploadInterval);
+      setUploadProgress(100);
+
+      // Reading stage
+      setProcessingStage('reading');
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      // Analyzing stage
+      setProcessingStage('analyzing');
       
-      const analysis = await labService.analyzeLabReport(inputText);
+      // Call backend API
+      const analysis = await labService.analyzeLabReport(file.name);
+      
       setResult(analysis);
+      setProcessingStage('complete');
     } catch (err) {
-      setError(language === 'en'
-        ? 'Failed to analyze lab report. Please try again.'
-        : 'لیب رپورٹ کا تجزیہ کرنے میں ناکام۔ براہ کرم دوبارہ کوشش کریں۔'
-      );
-    } finally {
-      setLoading(false);
+      setError(t(
+        'Failed to analyze lab report. Please try again.',
+        'لیب رپورٹ کا تجزیہ کرنے میں ناکام۔ براہ کرم دوبارہ کوشش کریں۔'
+      ));
+      setProcessingStage('error');
     }
   };
 
-  const handleReset = () => {
-    setFile(null);
-    setManualInput('');
-    setResult(null);
-    setError(null);
+  const toggleResultExpansion = (index: number) => {
+    const newExpanded = new Set(expandedResults);
+    if (newExpanded.has(index)) {
+      newExpanded.delete(index);
+    } else {
+      newExpanded.add(index);
+    }
+    setExpandedResults(newExpanded);
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'normal':
         return <CheckIcon sx={{ color: colors.success.main }} />;
-      case 'abnormal':
+      case 'low':
+      case 'high':
         return <WarningIcon sx={{ color: colors.warning.main }} />;
       case 'critical':
         return <ErrorIcon sx={{ color: colors.error.main }} />;
       default:
-        return null;
+        return <InfoIcon sx={{ color: colors.text.secondary }} />;
     }
   };
 
@@ -139,7 +173,8 @@ export const LabReportReader: React.FC = () => {
     switch (status) {
       case 'normal':
         return colors.success.main;
-      case 'abnormal':
+      case 'low':
+      case 'high':
         return colors.warning.main;
       case 'critical':
         return colors.error.main;
@@ -148,300 +183,343 @@ export const LabReportReader: React.FC = () => {
     }
   };
 
-  return (
-    <Container maxWidth="md">
-      <Box sx={{ py: 4 }}>
-        {/* Header */}
+  const getStatusLabel = (status: string) => {
+    const labels: Record<string, { en: string; ur: string }> = {
+      normal: { en: 'Normal', ur: 'معمول' },
+      low: { en: 'Low', ur: 'کم' },
+      high: { en: 'High', ur: 'زیادہ' },
+      critical: { en: 'Critical', ur: 'سنجیدہ' },
+      unreadable: { en: 'Unreadable', ur: 'غیر پڑھنے کے قابل' }
+    };
+    return labels[status]?.[language] || status;
+  };
+
+  const getOverallStatusColor = (status: string) => {
+    switch (status) {
+      case 'normal':
+        return colors.success.main;
+      case 'some_abnormal':
+        return colors.warning.main;
+      case 'concerning':
+        return colors.error.main;
+      default:
+        return colors.text.secondary;
+    }
+  };
+
+  // Upload Screen
+  if (processingStage === 'idle' || processingStage === 'error') {
+    return (
+      <Container maxWidth="md" sx={{ py: 4 }}>
         <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 4 }}>
-          <Button
-            startIcon={<BackIcon />}
-            onClick={() => navigate('/dashboard')}
-            sx={{ color: 'text.secondary' }}
-          >
-            {language === 'en' ? 'Back' : 'واپس'}
-          </Button>
+          <IconButton onClick={() => navigate('/dashboard')}>
+            <BackIcon />
+          </IconButton>
+          <Typography variant="h4" component="h1" sx={{ fontWeight: 700 }}>
+            {t('Lab Report Reader', 'لیب رپورٹ ریڈر')}
+          </Typography>
         </Stack>
 
-        <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 700 }}>
-          {language === 'en' ? 'Lab Report Reader' : 'لیب رپورٹ ریڈر'}
-        </Typography>
-        <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
-          {language === 'en'
-            ? 'Upload your lab report or enter results to get clear explanations'
-            : 'واضح وضاحت حاصل کرنے کے لیے اپنی لیب رپورٹ اپ لوڈ کریں یا نتائج درج کریں'}
-        </Typography>
+        <Paper 
+          elevation={0}
+          sx={{ 
+            p: 4, 
+            border: `2px dashed ${dragActive ? colors.primary.main : colors.border.main}`,
+            borderRadius: 3,
+            bgcolor: dragActive ? colors.primary[50] : 'transparent',
+            transition: 'all 0.2s',
+            cursor: 'pointer',
+            '&:hover': {
+              borderColor: colors.primary.light,
+              bgcolor: colors.primary[50]
+            }
+          }}
+          onDragEnter={handleDrag}
+          onDragLeave={handleDrag}
+          onDragOver={handleDrag}
+          onDrop={handleDrop}
+        >
+          <input
+            type="file"
+            id="file-upload"
+            hidden
+            accept=".pdf,.jpg,.jpeg,.png"
+            onChange={handleFileInputChange}
+          />
+          <label htmlFor="file-upload" style={{ cursor: 'pointer', display: 'block' }}>
+            <Stack alignItems="center" spacing={2}>
+              <UploadIcon sx={{ fontSize: 64, color: colors.primary.main }} />
+              <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                {t('Upload your lab report', 'اپنی لیب رپورٹ اپ لوڈ کریں')}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {t('PDF, JPG, PNG • Max 10MB', 'PDF, JPG, PNG • زیادہ سے زیادہ 10MB')}
+              </Typography>
+            </Stack>
+          </label>
+        </Paper>
 
-        {/* Upload/Input Form */}
-        {!result && (
-          <Paper elevation={0} sx={{ p: 3, mb: 4, border: `1px solid ${colors.border.main}`, borderRadius: 3 }}>
-            <form onSubmit={handleSubmit}>
-              <Stack spacing={3}>
-                {/* Drag and Drop Zone */}
-                <Box
-                  onDragEnter={handleDrag}
-                  onDragLeave={handleDrag}
-                  onDragOver={handleDrag}
-                  onDrop={handleDrop}
-                  sx={{
-                    border: `2px dashed ${dragActive ? colors.primary.main : colors.border.main}`,
-                    borderRadius: 3,
-                    p: 4,
-                    textAlign: 'center',
-                    bgcolor: dragActive ? colors.primary[50] : 'transparent',
-                    transition: 'all 0.2s',
-                    cursor: 'pointer',
-                    '&:hover': {
-                      borderColor: colors.primary.light,
-                      bgcolor: colors.primary[50],
-                    },
-                  }}
-                >
-                  <input
-                    type="file"
-                    id="file-upload"
-                    hidden
-                    accept=".pdf,.jpg,.jpeg,.png,.webp"
-                    onChange={handleFileInputChange}
-                  />
-                  <label htmlFor="file-upload" style={{ cursor: 'pointer' }}>
-                    <UploadIcon sx={{ fontSize: 48, color: colors.primary.main, mb: 2 }} />
-                    <Typography variant="h6" gutterBottom>
-                      {language === 'en' ? 'Drop your lab report here' : 'اپنی لیب رپورٹ یہاں ڈراپ کریں'}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {language === 'en' 
-                        ? 'or click to browse (PDF, JPG, PNG - max 10MB)'
-                        : 'یا براؤز کرنے کے لیے کلک کریں (PDF, JPG, PNG - زیادہ سے زیادہ 10MB)'}
-                    </Typography>
-                  </label>
-                </Box>
-
-                {/* File Preview */}
-                {file && (
-                  <Paper 
-                    elevation={0} 
-                    sx={{ 
-                      p: 2, 
-                      border: `1px solid ${colors.border.main}`,
-                      borderRadius: 2,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                    }}
-                  >
-                    <Stack direction="row" spacing={2} alignItems="center">
-                      <FileIcon sx={{ color: colors.primary.main }} />
-                      <Box>
-                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                          {file.name}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {(file.size / 1024 / 1024).toFixed(2)} MB
-                        </Typography>
-                      </Box>
-                    </Stack>
-                    <IconButton onClick={handleRemoveFile} size="small">
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  </Paper>
-                )}
-
-                <Divider>
-                  <Typography variant="body2" color="text.secondary">
-                    {language === 'en' ? 'OR' : 'یا'}
-                  </Typography>
-                </Divider>
-
-                {/* Manual Input */}
-                <Box>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                    {language === 'en' ? 'Or enter lab results manually:' : 'یا لیب نتائج دستی طور پر درج کریں:'}
-                  </Typography>
-                  <textarea
-                    value={manualInput}
-                    onChange={(e) => setManualInput(e.target.value)}
-                    placeholder={language === 'en'
-                      ? 'Enter your lab results here...\n\nExample:\nHemoglobin: 12.5 g/dL\nCholesterol: 240 mg/dL'
-                      : 'اپنے لیب نتائج یہاں درج کریں...\n\nمثال:\nہیموگلوبن: 12.5 g/dL\nکولیسٹرول: 240 mg/dL'}
-                    style={{
-                      width: '100%',
-                      minHeight: '150px',
-                      padding: '12px',
-                      borderRadius: '8px',
-                      border: `1px solid ${colors.border.main}`,
-                      fontFamily: 'inherit',
-                      fontSize: '14px',
-                      resize: 'vertical',
-                    }}
-                    disabled={loading || !!file}
-                  />
-                </Box>
-
-                {error && (
-                  <Alert severity="error" sx={{ borderRadius: 2 }}>
-                    {error}
-                  </Alert>
-                )}
-
-                {loading && (
-                  <Box sx={{ width: '100%' }}>
-                    <LinearProgress sx={{ mb: 1, borderRadius: 1 }} />
-                    <Typography variant="body2" color="text.secondary" align="center">
-                      {language === 'en' ? 'Analyzing your lab report...' : 'آپ کی لیب رپورٹ کا تجزیہ ہو رہا ہے...'}
-                    </Typography>
-                  </Box>
-                )}
-
-                <Button
-                  type="submit"
-                  variant="contained"
-                  size="large"
-                  disabled={loading || (!file && !manualInput.trim())}
-                  sx={{
-                    borderRadius: 2,
-                    py: 1.5,
-                    fontSize: '1rem',
-                    fontWeight: 600,
-                  }}
-                >
-                  {loading 
-                    ? (language === 'en' ? 'Analyzing...' : 'تجزیہ ہو رہا ہے...')
-                    : (language === 'en' ? 'Analyze Lab Report' : 'لیب رپورٹ کا تجزیہ کریں')
-                  }
-                </Button>
-              </Stack>
-            </form>
+        {file && (
+          <Paper elevation={0} sx={{ p: 3, mt: 3, border: `1px solid ${colors.border.main}`, borderRadius: 2 }}>
+            <Stack direction="row" alignItems="center" spacing={2}>
+              <FileIcon sx={{ color: colors.primary.main }} />
+              <Box sx={{ flex: 1 }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                  {file.name}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {(file.size / 1024 / 1024).toFixed(2)} MB
+                </Typography>
+              </Box>
+              <IconButton onClick={handleRemoveFile} size="small">
+                <DeleteIcon />
+              </IconButton>
+            </Stack>
           </Paper>
         )}
 
-        {/* Results */}
-        {result && (
-          <Stack spacing={3}>
-            {/* Important Note */}
-            <Alert severity="info" sx={{ borderRadius: 2 }}>
-              <Typography variant="body2">
-                {result.important_note}
-              </Typography>
-            </Alert>
-
-            {/* Summary */}
-            <Paper elevation={0} sx={{ p: 3, border: `1px solid ${colors.border.main}`, borderRadius: 3 }}>
-              <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
-                {language === 'en' ? 'Summary' : 'خلاصہ'}
-              </Typography>
-              <Typography variant="body1" sx={{ lineHeight: 1.8 }}>
-                {result.summary}
-              </Typography>
-            </Paper>
-
-            {/* Individual Results */}
-            <Paper elevation={0} sx={{ p: 3, border: `1px solid ${colors.border.main}`, borderRadius: 3 }}>
-              <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
-                {language === 'en' ? 'Results' : 'نتائج'}
-              </Typography>
-              <Stack spacing={2}>
-                {result.results.map((labResult, index) => (
-                  <Paper
-                    key={index}
-                    elevation={0}
-                    sx={{
-                      p: 2,
-                      border: `1px solid ${getStatusColor(labResult.status)}30`,
-                      bgcolor: `${getStatusColor(labResult.status)}05`,
-                      borderRadius: 2,
-                    }}
-                  >
-                    <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
-                      <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                        {labResult.name}
-                      </Typography>
-                      <Stack direction="row" spacing={1} alignItems="center">
-                        {getStatusIcon(labResult.status)}
-                        <Typography variant="body2" sx={{ color: getStatusColor(labResult.status), fontWeight: 600 }}>
-                          {labResult.value} {labResult.unit}
-                        </Typography>
-                      </Stack>
-                    </Stack>
-                    <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6 }}>
-                      {labResult.what_this_may_mean}
-                    </Typography>
-                  </Paper>
-                ))}
-              </Stack>
-            </Paper>
-
-            {/* Warning Signs */}
-            <Paper 
-              elevation={0} 
-              sx={{ 
-                p: 3, 
-                border: `1px solid ${colors.warning.main}30`,
-                bgcolor: `${colors.warning.main}05`,
-                borderRadius: 3 
-              }}
-            >
-              <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, color: colors.warning.dark }}>
-                <WarningIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
-                {language === 'en' ? 'Warning Signs' : 'انتباہی علامات'}
-              </Typography>
-              <Stack spacing={1.5}>
-                {result.warning_signs.map((sign, index) => (
-                  <Typography key={index} variant="body2" sx={{ lineHeight: 1.8 }}>
-                    {sign}
-                  </Typography>
-                ))}
-              </Stack>
-            </Paper>
-
-            {/* Next Steps */}
-            <Paper 
-              elevation={0} 
-              sx={{ 
-                p: 3, 
-                border: `1px solid ${colors.info.main}30`,
-                bgcolor: `${colors.info.main}05`,
-                borderRadius: 3 
-              }}
-            >
-              <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, color: colors.info.dark }}>
-                {language === 'en' ? 'Recommended Next Steps' : 'تجویز کردہ اگلے اقدامات'}
-              </Typography>
-              <Stack spacing={1.5}>
-                {result.next_steps.map((step, index) => (
-                  <Typography key={index} variant="body2" sx={{ lineHeight: 1.8 }}>
-                    {step}
-                  </Typography>
-                ))}
-              </Stack>
-            </Paper>
-
-            {/* Disclaimer */}
-            <Alert severity="info" sx={{ borderRadius: 2 }}>
-              {result.disclaimer}
-            </Alert>
-
-            {/* Actions */}
-            <Stack direction="row" spacing={2} justifyContent="center">
-              <Button
-                variant="outlined"
-                onClick={handleReset}
-                sx={{ borderRadius: 2, px: 4 }}
-              >
-                {language === 'en' ? 'Analyze Another Report' : 'دوسری رپورٹ کا تجزیہ کریں'}
-              </Button>
-              <Button
-                variant="contained"
-                onClick={() => navigate('/dashboard')}
-                sx={{ borderRadius: 2, px: 4 }}
-              >
-                {language === 'en' ? 'Back to Dashboard' : 'ڈیش بورڈ پر واپس'}
-              </Button>
-            </Stack>
-          </Stack>
+        {error && (
+          <Alert severity="error" sx={{ mt: 3, borderRadius: 2 }}>
+            {error}
+          </Alert>
         )}
-      </Box>
-    </Container>
-  );
+
+        {file && (
+          <Button
+            variant="contained"
+            size="large"
+            fullWidth
+            onClick={handleSubmit}
+            sx={{ mt: 3, py: 2, borderRadius: 2, fontWeight: 600 }}
+          >
+            {t('Analyze Report', 'رپورٹ کا تجزیہ کریں')}
+          </Button>
+        )}
+      </Container>
+    );
+  }
+
+  // Processing Screen
+  if (processingStage === 'uploading' || processingStage === 'reading' || processingStage === 'analyzing') {
+    return (
+      <Container maxWidth="md" sx={{ py: 4 }}>
+        <Stack alignItems="center" spacing={4} sx={{ py: 8 }}>
+          {processingStage === 'uploading' && (
+            <>
+              <UploadIcon sx={{ fontSize: 64, color: colors.primary.main }} />
+              <Typography variant="h5" sx={{ fontWeight: 600 }}>
+                {t('Uploading your report...', 'آپ کی رپورٹ اپ لوڈ ہو رہی ہے...')}
+              </Typography>
+              <LinearProgress 
+                variant="determinate" 
+                value={uploadProgress} 
+                sx={{ width: '100%', maxWidth: 400, height: 8, borderRadius: 1 }}
+              />
+              <Typography variant="body2" color="text.secondary">
+                {uploadProgress}%
+              </Typography>
+            </>
+          )}
+
+          {processingStage === 'reading' && (
+            <>
+              <FileIcon sx={{ fontSize: 64, color: colors.primary.main, animation: 'pulse 2s infinite' }} />
+              <Typography variant="h5" sx={{ fontWeight: 600 }}>
+                {t('Reading your report...', 'آپ کی رپورٹ پڑھی جا رہی ہے...')}
+              </Typography>
+              <LinearProgress sx={{ width: '100%', maxWidth: 400, height: 8, borderRadius: 1 }} />
+            </>
+          )}
+
+          {processingStage === 'analyzing' && (
+            <>
+              <InfoIcon sx={{ fontSize: 64, color: colors.primary.main, animation: 'pulse 2s infinite' }} />
+              <Typography variant="h5" sx={{ fontWeight: 600 }}>
+                {t('Analyzing your results...', 'آپ کے نتائج کا تجزیہ ہو رہا ہے...')}
+              </Typography>
+              <LinearProgress sx={{ width: '100%', maxWidth: 400, height: 8, borderRadius: 1 }} />
+            </>
+          )}
+        </Stack>
+      </Container>
+    );
+  }
+
+  // Results Screen
+  if (processingStage === 'complete' && result) {
+    return (
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 4 }}>
+          <IconButton onClick={() => navigate('/dashboard')}>
+            <BackIcon />
+          </IconButton>
+          <Typography variant="h4" component="h1" sx={{ fontWeight: 700 }}>
+            {t('Your Report', 'آپ کی رپورٹ')}
+          </Typography>
+        </Stack>
+
+        {/* Summary Card */}
+        <Card 
+          elevation={0} 
+          sx={{ 
+            mb: 4, 
+            border: `2px solid ${getOverallStatusColor(result.overall_status)}`,
+            borderRadius: 3 
+          }}
+        >
+          <CardContent>
+            <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 2 }}>
+              <Chip 
+                label={result.overall_status.replace('_', ' ').toUpperCase()}
+                sx={{ 
+                  bgcolor: getOverallStatusColor(result.overall_status),
+                  color: 'white',
+                  fontWeight: 700
+                }}
+              />
+              <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                {t('In Simple Words', 'آسان الفاظ میں')}
+              </Typography>
+            </Stack>
+            <Stack spacing={1}>
+              {result.summary.in_simple_words.map((point, idx) => (
+                <Typography key={idx} variant="body1">
+                  {point}
+                </Typography>
+              ))}
+            </Stack>
+          </CardContent>
+        </Card>
+
+        {/* Results Table */}
+        <Paper elevation={0} sx={{ mb: 4, borderRadius: 3, overflow: 'hidden' }}>
+          <TableContainer>
+            <Table>
+              <TableHead>
+                <TableRow sx={{ bgcolor: colors.background.subtle }}>
+                  <TableCell sx={{ fontWeight: 700 }}>{t('Test', 'ٹیسٹ')}</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 700 }}>{t('Result', 'نتیجہ')}</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 700 }}>{t('Reference', 'حوالہ')}</TableCell>
+                  <TableCell align="center" sx={{ fontWeight: 700 }}>{t('Status', 'حالت')}</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {result.results.map((item, idx) => (
+                  <React.Fragment key={idx}>
+                    <TableRow 
+                      hover
+                      sx={{ 
+                        cursor: 'pointer',
+                        '&:hover': { bgcolor: colors.background.subtle }
+                      }}
+                      onClick={() => toggleResultExpansion(idx)}
+                    >
+                      <TableCell>
+                        <Stack direction="row" alignItems="center" spacing={1}>
+                          {getStatusIcon(item.status)}
+                          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                            {item.test_name}
+                          </Typography>
+                        </Stack>
+                      </TableCell>
+                      <TableCell align="right">
+                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                          {item.result_value} {item.result_unit}
+                        </Typography>
+                      </TableCell>
+                      <TableCell align="right">
+                        <Typography variant="body2" color="text.secondary">
+                          {item.reference_range || '—'}
+                        </Typography>
+                      </TableCell>
+                      <TableCell align="center">
+                        <Chip 
+                          label={getStatusLabel(item.status)}
+                          size="small"
+                          sx={{ 
+                            bgcolor: `${getStatusColor(item.status)}20`,
+                            color: getStatusColor(item.status),
+                            fontWeight: 600
+                          }}
+                        />
+                      </TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell colSpan={4} sx={{ py: 0, border: 0 }}>
+                        <Collapse in={expandedResults.has(idx)} timeout="auto" unmountOnExit>
+                          <Box sx={{ py: 2, px: 3, bgcolor: colors.background.subtle }}>
+                            <Stack spacing={2}>
+                              <Box>
+                                <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 0.5 }}>
+                                  {t('What is this?', 'یہ کیا ہے؟')}
+                                </Typography>
+                                <Typography variant="body2">
+                                  {item.what_is_this}
+                                </Typography>
+                              </Box>
+                              <Box>
+                                <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 0.5 }}>
+                                  {t('Your result', 'آپ کا نتیجہ')}
+                                </Typography>
+                                <Typography variant="body2">
+                                  {item.result_value} {item.result_unit}
+                                </Typography>
+                              </Box>
+                              <Box>
+                                <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 0.5 }}>
+                                  {t('What does it mean?', 'اس کا کیا مطلب ہے؟')}
+                                </Typography>
+                                <Typography variant="body2">
+                                  {item.what_it_means}
+                                </Typography>
+                              </Box>
+                              <Box>
+                                <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 0.5 }}>
+                                  {t('What should I do?', 'مجھے کیا کرنا چاہیے؟')}
+                                </Typography>
+                                <Typography variant="body2">
+                                  {item.what_to_do}
+                                </Typography>
+                              </Box>
+                            </Stack>
+                          </Box>
+                        </Collapse>
+                      </TableCell>
+                    </TableRow>
+                  </React.Fragment>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Paper>
+
+        {/* Disclaimer */}
+        <Alert severity="info" sx={{ borderRadius: 2 }}>
+          {result.disclaimer}
+        </Alert>
+
+        {/* Actions */}
+        <Stack direction="row" spacing={2} sx={{ mt: 3 }}>
+          <Button
+            variant="outlined"
+            onClick={handleRemoveFile}
+            sx={{ borderRadius: 2 }}
+          >
+            {t('Analyze Another Report', 'دوسری رپورٹ کا تجزیہ کریں')}
+          </Button>
+          <Button
+            variant="contained"
+            onClick={() => navigate('/dashboard')}
+            sx={{ borderRadius: 2 }}
+          >
+            {t('Back to Dashboard', 'ڈیش بورڈ پر واپس')}
+          </Button>
+        </Stack>
+      </Container>
+    );
+  }
+
+  return null;
 };
 
 export default LabReportReader;
