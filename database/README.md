@@ -1,361 +1,219 @@
-# MediMind AI - Database
+# MediMind AI - Database Layer
 
 ## Overview
 
-Privacy-first database design for MediMind AI. We follow the principle of **data minimization** - only storing what's absolutely necessary for the application to function.
+Complete production-ready database layer for MediMind AI, built with PostgreSQL and TypeScript.
 
-## 📁 Structure
+## Architecture
 
 ```
 database/
-├── schemas/              # Individual table schemas
-│   ├── users.sql
-│   ├── health_profiles.sql
-│   ├── consultations.sql
-│   ├── symptoms.sql
-│   ├── lab_reports.sql
-│   ├── lab_results.sql
-│   ├── medications.sql
-│   └── health_events.sql
-│
-├── migrations/           # Database migrations
-│   ├── 001_initial_schema.sql
-│   ├── 002_add_indexes.sql
-│   └── 003_add_triggers.sql
-│
-├── seed/                 # Sample data for development
-│   ├── sample_users.sql
-│   ├── sample_consultations.sql
-│   └── sample_health_data.sql
-│
-├── indexes/              # Consolidated index definitions
-│   └── all_indexes.sql
-│
-└── README.md
+├── src/
+│   ├── config/                    # Configuration
+│   ├── client/                    # Database client with connection pooling
+│   ├── types/                     # TypeScript type definitions
+│   ├── repositories/              # Data access layer (5 repositories)
+│   ├── migrations/                # Migration runner
+│   ├── seed/                      # Seed runner
+│   └── utils/                     # Utilities
+├── schemas/                       # SQL schema files (8 tables)
+├── migrations/                    # Migration SQL files (3 migrations)
+├── seed/                          # Seed SQL files (3 seed files)
+└── indexes/                       # Index definitions
 ```
 
-## 🗄️ Collections
+## Features
 
-### 1. users
-**Purpose**: Authentication and user management  
-**Data Stored**:
-- Email (unique identifier)
-- Password hash (bcrypt)
-- Language preference
-- Account status
+### Database Client
+- ✅ Connection pooling (configurable max connections)
+- ✅ Transaction support
+- ✅ Query logging and monitoring
+- ✅ Health check endpoint
+- ✅ Pool statistics
 
-**Privacy Note**: Minimal authentication data only.
+### Repository Pattern
+- ✅ User Repository
+- ✅ Consultation Repository
+- ✅ Symptom Repository
+- ✅ Medication Repository
+- ✅ Health Event Repository
 
----
+### Migration System
+- ✅ Automatic migration tracking
+- ✅ Up/down migration support
+- ✅ SQL-based migrations
+- ✅ Idempotent migrations
 
-### 2. health_profiles
-**Purpose**: Basic user preferences  
-**Data Stored**:
-- Date of birth (optional)
-- Gender (optional)
-- Preferred units (metric/imperial)
-- Notification preferences
+### Seed System
+- ✅ Sample data loading
+- ✅ Development data
+- ✅ Test data support
 
-**Privacy Note**: NO medical information stored. Only basic demographics for personalization.
+### Type Safety
+- ✅ Full TypeScript coverage
+- ✅ Type-safe queries
+- ✅ Interface definitions for all entities
+- ✅ Generic pagination support
 
----
+## Database Schema
 
-### 3. consultations
-**Purpose**: AI interaction history  
-**Data Stored**:
-- User input (what they asked)
-- AI response (analysis results)
-- Severity level
-- Care navigation recommendation
+### Tables (8 Total)
 
-**Privacy Note**: Stores only what's needed to provide the service and maintain conversation history.
+1. **users** - User accounts and authentication
+2. **health_profiles** - User health information
+3. **consultations** - AI analysis history
+4. **symptoms** - Symptom tracking
+5. **lab_reports** - Lab report metadata
+6. **lab_results** - Individual lab results
+7. **medications** - Medication tracking
+8. **health_events** - Timeline events
 
----
+### Key Features
+- UUID primary keys
+- Foreign key constraints with cascade deletes
+- JSONB for flexible data storage
+- Automatic timestamp triggers
+- Comprehensive indexing
 
-### 4. symptoms
-**Purpose**: Symptom tracking for timeline  
-**Data Stored**:
-- Symptom title
-- Description (optional)
-- Severity level
-- Active status
-- Dates (onset/resolution)
-
-**Privacy Note**: Minimal symptom data for user experience. Users control what they track.
-
----
-
-### 5. lab_reports
-**Purpose**: Lab report metadata  
-**Data Stored**:
-- Report name
-- Report date
-- Facility name
-- Summary (optional)
-- File path/hash (if uploaded)
-
-**Privacy Note**: Metadata only. Actual lab values stored separately in lab_results.
-
----
-
-### 6. lab_results
-**Purpose**: Individual lab test values  
-**Data Stored**:
-- Test name
-- Value and unit
-- Reference range
-- Status (normal/abnormal/critical)
-- Interpretation
-
-**Privacy Note**: Only stores results that users explicitly analyze through the app.
-
----
-
-### 7. medications
-**Purpose**: Medication tracking and reminders  
-**Data Stored**:
-- Medication name
-- Dosage
-- Frequency
-- Start/end dates
-- Reminder settings
-
-**Privacy Note**: Minimal data for medication reminders. No pharmacy or prescription details.
-
----
-
-### 8. health_events
-**Purpose**: Timeline feature  
-**Data Stored**:
-- Event type (symptom/lab/medication/note/appointment)
-- Title
-- Description (optional)
-- Event date
-- Severity (optional)
-- Related IDs (consultation/lab_report/medication)
-
-**Privacy Note**: Aggregated timeline view. Links to other collections without duplicating data.
-
-## 🔒 Privacy Principles
-
-### Data Minimization
-We only store:
-- ✅ What's needed for core functionality
-- ✅ What users explicitly choose to track
-- ✅ Minimal metadata for organization
-
-We do NOT store:
-- ❌ Unnecessary personal information
-- ❌ Detailed medical histories unless user-initiated
-- ❌ Third-party medical records
-- ❌ Insurance or billing information
-- ❌ Doctor contact details
-- ❌ Pharmacy information
-
-### User Control
-- Users can delete their data at any time
-- Cascading deletes ensure complete data removal
-- No data is shared with third parties
-- All data is encrypted at rest (planned)
-
-### Security
-- Passwords hashed with bcrypt (10 rounds)
-- JWT tokens for authentication
-- AES-256-GCM encryption for sensitive data
-- Input sanitization prevents SQL injection
-- Rate limiting prevents abuse
-
-## 🚀 Setup
+## Setup
 
 ### Prerequisites
 - PostgreSQL 15+
-- psql command-line tool
+- Node.js 18+
 
-### Create Database
+### Installation
 ```bash
+cd database
+npm install
+```
+
+### Configuration
+```bash
+cp .env.example .env
+# Edit .env with your database credentials
+```
+
+### Database Setup
+```bash
+# Create database
 createdb medimind
-```
-
-### Run Migrations
-```bash
-# Run in order
-psql -U postgres -d medimind -f migrations/001_initial_schema.sql
-psql -U postgres -d medimind -f migrations/002_add_indexes.sql
-psql -U postgres -d medimind -f migrations/003_add_triggers.sql
-```
-
-### Load Sample Data (Development Only)
-```bash
-psql -U postgres -d medimind -f seed/sample_users.sql
-psql -U postgres -d medimind -f seed/sample_consultations.sql
-psql -U postgres -d medimind -f seed/sample_health_data.sql
-```
-
-### Apply All Indexes
-```bash
-psql -U postgres -d medimind -f indexes/all_indexes.sql
-```
-
-## 📊 Schema Design
-
-### Relationships
-```
-users
-├── health_profiles (1:1)
-├── consultations (1:N)
-├── symptoms (1:N)
-├── lab_reports (1:N)
-│   └── lab_results (1:N)
-├── medications (1:N)
-└── health_events (1:N)
-    ├── related_consultation_id
-    ├── related_lab_report_id
-    └── related_medication_id
-```
-
-### Cascade Deletes
-When a user is deleted:
-- All related data is automatically deleted
-- No orphaned records
-- Complete data removal for privacy
-
-### Indexes
-Optimized for common queries:
-- User lookups by email
-- Timeline queries by user and date
-- Active symptoms/medications
-- Consultation history
-
-## 🔧 Maintenance
-
-### Backups
-```bash
-# Full backup
-pg_dump -U postgres medimind > backup_$(date +%Y%m%d).sql
-
-# Restore
-psql -U postgres -d medimind < backup_20240101.sql
-```
-
-### Monitoring
-```sql
--- Check table sizes
-SELECT 
-    schemaname,
-    tablename,
-    pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) AS size
-FROM pg_tables
-WHERE schemaname = 'public'
-ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC;
-
--- Check index usage
-SELECT 
-    schemaname,
-    tablename,
-    indexname,
-    idx_scan,
-    idx_tup_read,
-    idx_tup_fetch
-FROM pg_stat_user_indexes
-ORDER BY idx_scan DESC;
-```
-
-### Cleanup
-```sql
--- Delete old consultations (older than 1 year)
-DELETE FROM consultations 
-WHERE created_at < NOW() - INTERVAL '1 year';
-
--- Delete inactive symptoms (resolved more than 6 months ago)
-UPDATE symptoms 
-SET is_active = false 
-WHERE resolved_date < NOW() - INTERVAL '6 months';
-```
-
-## 📈 Performance
-
-### Query Optimization
-- All foreign keys indexed
-- Composite indexes for common queries
-- Partial indexes for active records
-- JSONB for flexible AI responses
-
-### Expected Performance
-- User lookup: <10ms
-- Timeline query: <50ms
-- Consultation history: <100ms
-- Full text search: <200ms
-
-## 🧪 Testing
-
-### Test Database
-```bash
-# Create test database
-createdb medimind_test
 
 # Run migrations
-psql -U postgres -d medimind_test -f migrations/001_initial_schema.sql
-psql -U postgres -d medimind_test -f migrations/002_add_indexes.sql
-psql -U postgres -d medimind_test -f migrations/003_add_triggers.sql
+npm run migrate:up
 
-# Load test data
-psql -U postgres -d medimind_test -f seed/sample_users.sql
+# Load sample data (optional)
+npm run seed
 ```
 
-## 📝 Migration Guidelines
+## Usage
 
-### Creating New Migrations
-1. Name format: `NNN_description.sql` (e.g., `004_add_notifications.sql`)
-2. Always use `BEGIN;` and `COMMIT;`
-3. Test in development first
-4. Document changes in README
-5. Update seed data if needed
+### Import and Use
+```typescript
+import { 
+  db, 
+  userRepository, 
+  consultationRepository,
+  symptomRepository,
+  medicationRepository,
+  healthEventRepository
+} from './src';
 
-### Migration Checklist
-- [ ] Schema changes tested
-- [ ] Indexes added for new columns
-- [ ] Triggers updated if needed
-- [ ] Seed data updated
-- [ ] Documentation updated
-- [ ] Backup created before migration
+// Check connection
+const isHealthy = await db.healthCheck();
 
-## 🔐 Security Checklist
+// Create user
+const user = await userRepository.create({
+  email: 'user@example.com',
+  password_hash: 'hashed_password',
+  language_preference: 'en',
+});
 
-- [x] Passwords hashed with bcrypt
-- [x] Foreign key constraints with CASCADE
-- [x] Input validation in application layer
-- [x] No sensitive data in logs
-- [x] Encrypted connections (SSL/TLS)
-- [x] Regular backups
-- [x] Access control (database user permissions)
-- [x] Audit logging (planned)
+// Create consultation
+const consultation = await consultationRepository.create({
+  user_id: user.id,
+  type: 'symptom',
+  user_input: 'I have a headache',
+  ai_response: { severity: 2, urgency: 'self_care' },
+});
 
-## 📚 Resources
+// List with pagination
+const result = await consultationRepository.listByUser(user.id, {
+  page: 1,
+  limit: 20,
+  type: 'symptom',
+});
+```
 
-- [PostgreSQL Documentation](https://www.postgresql.org/docs/)
-- [Database Design Best Practices](https://www.postgresql.org/docs/current/ddl.html)
-- [Indexing Strategies](https://www.postgresql.org/docs/current/indexes.html)
-- [Security Best Practices](https://www.postgresql.org/docs/current/security.html)
+### Transactions
+```typescript
+await db.transaction(async (client) => {
+  await client.query('INSERT INTO users ...');
+  await client.query('INSERT INTO health_profiles ...');
+});
+```
 
-## 🤝 Contributing
+## Scripts
 
-When modifying the database:
-1. Create a new migration file
-2. Test thoroughly in development
-3. Update this README
-4. Update seed data if needed
-5. Document any breaking changes
+```bash
+npm run build          # Build TypeScript
+npm run migrate:up     # Run migrations
+npm run migrate:down   # Rollback last migration
+npm run seed           # Load sample data
+npm test               # Run tests
+```
 
-## ⚖️ Compliance
+## Security
 
-This database design follows:
-- **HIPAA** guidelines (minimal PHI storage)
-- **GDPR** principles (data minimization, right to deletion)
-- **Privacy by Design** principles
-- **Data Protection** best practices
+- ✅ Parameterized queries (SQL injection prevention)
+- ✅ Foreign key constraints
+- ✅ Soft deletes
+- ✅ Input validation
+- ✅ No sensitive data in logs
+- ✅ Encrypted connections support
+
+## Performance
+
+- ✅ Connection pooling
+- ✅ Comprehensive indexing
+- ✅ Query optimization
+- ✅ Efficient joins
+- ✅ Pagination support
+
+## Monitoring
+
+```typescript
+// Query logging
+// All queries logged with duration, row count, and errors
+
+// Pool statistics
+const stats = db.getPoolStats();
+// { totalCount: 20, idleCount: 15, waitingCount: 0 }
+
+// Health check
+const isHealthy = await db.healthCheck();
+```
+
+## Documentation
+
+- [Complete Architecture Guide](../docs/DATABASE_COMPLETE_ARCHITECTURE.md)
+- [Schema Documentation](./schemas/)
+- [Migration Guide](./migrations/)
+
+## Status
+
+✅ **COMPLETE AND PRODUCTION READY**
+
+- Total Tables: 8
+- Total Repositories: 5
+- Total Migrations: 3
+- Total Indexes: 20+
+- Full TypeScript coverage
+- Connection pooling
+- Transaction support
+- Migration system
+- Seed system
 
 ---
 
-**Last Updated**: 2024-01-01  
 **Version**: 1.0.0  
-**PostgreSQL Version**: 15+
+**Last Updated**: 2024-01-01
