@@ -358,16 +358,24 @@ export function SymptomChecker() {
             onChange={(e) => setInput(e.target.value)}
             placeholder={t('symptomPlaceholder')}
             className="w-full min-h-[120px] p-4 rounded-xl border border-border bg-background text-text-primary placeholder:text-text-secondary/60 resize-none focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary-light transition-all"
+            aria-label={t('symptomPlaceholder')}
+            aria-describedby="symptom-help"
           />
+          <p id="symptom-help" className="sr-only">
+            {language === 'en' 
+              ? 'Describe your symptoms in as much detail as possible. Include when they started and how severe they are.'
+              : 'اپنی علامات کی تفصیل بیان کریں۔ بتائیں کہ یہ کب شروع ہوئیں اور کتنی شدید ہیں۔'}
+          </p>
           
-          <div className="flex flex-wrap gap-2 mt-4">
+          <div className="flex flex-wrap gap-2 mt-4" role="group" aria-label="Quick symptom selection">
             {quickSymptoms.map((symptom, idx) => (
               <button
                 key={idx}
                 onClick={() => setInput(symptom.keyword)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary-50 text-primary text-xs font-medium hover:bg-primary-100 transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary-50 text-primary text-xs font-medium hover:bg-primary-100 transition-colors min-h-[44px]"
+                aria-label={`Select ${symptom.label} symptom`}
               >
-                <symptom.icon className="w-3 h-3" />
+                <symptom.icon className="w-3 h-3" aria-hidden="true" />
                 {symptom.label}
               </button>
             ))}
@@ -401,10 +409,18 @@ export function SymptomChecker() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             className="space-y-4"
+            role="region"
+            aria-label="Symptom analysis results"
+            aria-live="polite"
           >
             {/* Emergency Banner - Most Prominent */}
             {isEmergencyUrgency(result.urgency) && (
-              <div className="bg-critical border-2 border-critical rounded-2xl p-6 animate-pulse">
+              <div 
+                className="bg-critical border-2 border-critical rounded-2xl p-6 animate-pulse" 
+                role="alert" 
+                aria-live="assertive"
+                aria-label="Emergency medical alert"
+              >
                 <div className="flex items-start gap-4">
                   <div className="w-12 h-12 rounded-full bg-critical/20 flex items-center justify-center flex-shrink-0">
                     <AlertTriangle className="w-6 h-6 text-critical" />

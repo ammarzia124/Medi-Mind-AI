@@ -1,11 +1,14 @@
 import { createContext, useContext, useState, ReactNode } from 'react';
-import { Language, t as translate } from '../data/translations';
+import { Language, t as translate, supportedLanguages, type LanguageConfig } from '../data/translations';
 
 interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
   t: (key: string) => string;
   isRTL: boolean;
+  direction: 'ltr' | 'rtl';
+  languageConfig: LanguageConfig;
+  availableLanguages: LanguageConfig[];
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -17,10 +20,22 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     return translate(key as any, language);
   };
 
-  const isRTL = language === 'ur';
+  const languageConfig = supportedLanguages.find(l => l.code === language) || supportedLanguages[0];
+  const isRTL = languageConfig.direction === 'rtl';
+  const direction = languageConfig.direction;
+
+  const value: LanguageContextType = {
+    language,
+    setLanguage,
+    t,
+    isRTL,
+    direction,
+    languageConfig,
+    availableLanguages: supportedLanguages,
+  };
 
   return (
-    <LanguageContext.Provider value={{ language, setLanguage, t, isRTL }}>
+    <LanguageContext.Provider value={value}>
       {children}
     </LanguageContext.Provider>
   );

@@ -1,5 +1,30 @@
 export type Language = 'en' | 'ur';
 
+export interface LanguageConfig {
+  code: Language;
+  name: string;
+  nativeName: string;
+  direction: 'ltr' | 'rtl';
+  flag: string;
+}
+
+export const supportedLanguages: LanguageConfig[] = [
+  {
+    code: 'en',
+    name: 'English',
+    nativeName: 'English',
+    direction: 'ltr',
+    flag: '🇬🇧',
+  },
+  {
+    code: 'ur',
+    name: 'Urdu',
+    nativeName: 'اردو',
+    direction: 'rtl',
+    flag: '🇵🇰',
+  },
+];
+
 export const translations = {
   en: {
     // Navigation
@@ -76,6 +101,9 @@ export const translations = {
     language: 'Language',
     english: 'English',
     urdu: 'اردو',
+    skipToMain: 'Skip to main content',
+    mobileMenu: 'Open menu',
+    closeMenu: 'Close menu',
     
     // Care Navigation
     emergency: 'Emergency',
@@ -162,6 +190,9 @@ export const translations = {
     language: 'زبان',
     english: 'English',
     urdu: 'اردو',
+    skipToMain: 'مرکزی مواد پر جائیں',
+    mobileMenu: 'مینو کھولیں',
+    closeMenu: 'مینو بند کریں',
     
     // Care Navigation
     emergency: 'ایمرجنسی',
