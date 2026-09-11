@@ -2,32 +2,15 @@ export type Language = 'en' | 'ur';
 
 export type Page = 'home' | 'symptoms' | 'lab' | 'timeline';
 
-export interface SymptomResult {
-  possibleExplanations: string[];
-  severity: 'low' | 'moderate' | 'high';
-  whatThisMaySuggest: string;
-  warningSigns: string[];
-  suggestedNextStep: string;
-  selfCareOptions: string[];
-  careNavigation: 'emergency' | 'urgent' | 'routine' | 'selfCare';
-  emergencyMessage?: string;
-}
-
-export interface LabResult {
-  name: string;
-  value: string;
-  unit: string;
-  status: 'normal' | 'abnormal' | 'critical';
-  whatThisMayMean: string;
-}
-
-export interface LabAnalysis {
-  results: LabResult[];
-  summary: string;
-  whatThisMaySuggest: string;
-  nextSteps: string[];
-  importantNote: string;
-}
+// Re-export validated types from schemas
+export type {
+  SymptomAnalysis,
+  LabAnalysis,
+  LabResultItem,
+  Severity,
+  Urgency,
+  LabResultStatus,
+} from '../lib/schemas';
 
 export interface TimelineEntry {
   id: string;

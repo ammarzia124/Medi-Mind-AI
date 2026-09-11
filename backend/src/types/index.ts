@@ -1,28 +1,12 @@
-export interface SymptomResult {
-  possibleExplanations: string[];
-  severity: 'low' | 'moderate' | 'high';
-  whatThisMaySuggest: string;
-  warningSigns: string[];
-  suggestedNextStep: string;
-  selfCareOptions: string[];
-  careNavigation: 'emergency' | 'urgent' | 'routine' | 'selfCare';
-}
-
-export interface LabResult {
-  name: string;
-  value: string;
-  unit: string;
-  status: 'normal' | 'abnormal' | 'critical';
-  whatThisMayMean: string;
-}
-
-export interface LabAnalysis {
-  results: LabResult[];
-  summary: string;
-  whatThisMaySuggest: string;
-  nextSteps: string[];
-  importantNote: string;
-}
+// Re-export validated types from schemas
+export type {
+  SymptomAnalysis,
+  LabAnalysis,
+  Severity,
+  Urgency,
+  LabResultStatus,
+  LabResultItem,
+} from '../validators/schemas';
 
 export interface TimelineEntry {
   id: string;
