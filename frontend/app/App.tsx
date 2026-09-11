@@ -1,5 +1,7 @@
 import { useState, lazy, Suspense } from 'react';
 import { LanguageProvider, useLanguage } from '../contexts/LanguageContext';
+import { ThemeProvider, CssBaseline } from '@mui/material';
+import { theme, rtlTheme } from '../theme/theme';
 import { 
   Heart, 
   FlaskConical, 
@@ -216,7 +218,20 @@ function AppContent() {
 export default function App() {
   return (
     <LanguageProvider>
-      <AppContent />
+      <ThemeProviderWrapper>
+        <AppContent />
+      </ThemeProviderWrapper>
     </LanguageProvider>
+  );
+}
+
+// Theme provider wrapper that switches between LTR and RTL themes
+function ThemeProviderWrapper({ children }: { children: React.ReactNode }) {
+  const { isRTL } = useLanguage();
+  return (
+    <ThemeProvider theme={isRTL ? rtlTheme : theme}>
+      <CssBaseline />
+      {children}
+    </ThemeProvider>
   );
 }
