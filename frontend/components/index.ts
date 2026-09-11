@@ -1,18 +1,10 @@
 // Layout Components
-export { AppShell } from '../layout/AppShell';
+export { AppShell } from './layout/AppShell';
 
 // Shared Components
-export { HealthActionCard } from './HealthActionCard';
-export { SeverityIndicator } from './SeverityIndicator';
-export { EmergencyAlert } from './EmergencyAlert';
-export { EmptyState } from './EmptyState';
-export { LoadingSkeleton } from './LoadingSkeleton';
-export { ErrorState } from './ErrorState';
-
-// Re-export types
-export type { SeverityIndicatorProps } from './SeverityIndicator';
-export type { HealthActionCardProps } from './HealthActionCard';
-export type { EmergencyAlertProps } from './EmergencyAlert';
-export type { EmptyStateProps } from './EmptyState';
-export type { LoadingSkeletonProps } from './LoadingSkeleton';
-export type { ErrorStateProps } from './ErrorState';
+export { HealthActionCard } from './shared/HealthActionCard';
+export { SeverityIndicator } from './shared/SeverityIndicator';
+export { EmergencyAlert } from './shared/EmergencyAlert';
+export { EmptyState } from './shared/EmptyState';
+export { LoadingSkeleton } from './shared/LoadingSkeleton';
+export { ErrorState } from './shared/ErrorState';
