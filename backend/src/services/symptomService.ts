@@ -1,4 +1,4 @@
-import { SymptomResult } from '../../types';
+import { SymptomAnalysis } from '../validators/schemas';
 import { aiService } from '../ai/aiService';
 
 /**
@@ -14,7 +14,7 @@ import { aiService } from '../ai/aiService';
  * and NEVER encourage users to delay treatment.
  */
 export class SymptomService {
-  async analyzeSymptoms(input: string): Promise<SymptomResult> {
+  async analyzeSymptoms(input: string): Promise<SymptomAnalysis> {
     // Use AI service for analysis
     const result = await aiService.analyzeSymptoms(input);
     
@@ -30,11 +30,11 @@ export class SymptomService {
     return [];
   }
 
-  private async saveToDatabase(userId: string, input: string, result: SymptomResult): Promise<void> {
+  private async saveToDatabase(userId: string, input: string, result: SymptomAnalysis): Promise<void> {
     // TODO: Implement database save
     // await db.query(
-    //   'INSERT INTO consultations (user_id, type, user_input, ai_response, severity_level, care_navigation) VALUES ($1, $2, $3, $4, $5, $6)',
-    //   [userId, 'symptom', input, JSON.stringify(result), result.severity, result.careNavigation]
+    //   'INSERT INTO consultations (user_id, type, user_input, ai_response, severity, urgency) VALUES ($1, $2, $3, $4, $5, $6)',
+    //   [userId, 'symptom', input, JSON.stringify(result), result.severity, result.urgency]
     // );
   }
 }

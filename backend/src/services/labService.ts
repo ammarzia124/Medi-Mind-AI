@@ -1,4 +1,4 @@
-import { LabAnalysis } from '../../types';
+import { LabAnalysis } from '../validators/schemas';
 import { aiService } from '../ai/aiService';
 
 /**
@@ -33,8 +33,8 @@ export class LabService {
   private async saveToDatabase(userId: string, input: string, result: LabAnalysis): Promise<void> {
     // TODO: Implement database save
     // await db.query(
-    //   'INSERT INTO consultations (user_id, type, user_input, ai_response) VALUES ($1, $2, $3, $4)',
-    //   [userId, 'lab_report', input, JSON.stringify(result)]
+    //   'INSERT INTO consultations (user_id, type, user_input, ai_response, severity, urgency) VALUES ($1, $2, $3, $4, $5, $6)',
+    //   [userId, 'lab_report', input, JSON.stringify(result), result.severity, result.urgency]
     // );
   }
 }
