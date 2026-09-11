@@ -1,5 +1,6 @@
 import { SymptomAnalysis } from '../validators/schemas';
-import { aiService } from '../ai/aiService';
+import { aiService } from '../ai/AIService';
+import { logger } from '../utils/logger';
 
 /**
  * Symptom Service
@@ -14,9 +15,19 @@ import { aiService } from '../ai/aiService';
  * and NEVER encourage users to delay treatment.
  */
 export class SymptomService {
+  /**
+   * Analyze symptoms using AI
+   */
   async analyzeSymptoms(input: string): Promise<SymptomAnalysis> {
-    // Use AI service for analysis
+    logger.info('Analyzing symptoms', { inputLength: input.length });
+    
+    // Use AI service with safety pipeline
     const result = await aiService.analyzeSymptoms(input);
+    
+    logger.info('Symptom analysis completed', { 
+        severity: result.severity, 
+        urgency: result.urgency 
+    });
     
     // TODO: Save to database if user is authenticated
     // await this.saveToDatabase(userId, input, result);
@@ -24,13 +35,23 @@ export class SymptomService {
     return result;
   }
 
+  /**
+   * Get symptom analysis history
+   */
   async getSymptomHistory(userId: string): Promise<any[]> {
+    logger.info('Getting symptom history', { userId });
+    
     // TODO: Fetch from database
     // return await db.query('SELECT * FROM consultations WHERE user_id = $1 AND type = $2 ORDER BY created_at DESC', [userId, 'symptom']);
     return [];
   }
 
+  /**
+   * Save symptom analysis to database
+   */
   private async saveToDatabase(userId: string, input: string, result: SymptomAnalysis): Promise<void> {
+    logger.info('Saving symptom analysis to database', { userId });
+    
     // TODO: Implement database save
     // await db.query(
     //   'INSERT INTO consultations (user_id, type, user_input, ai_response, severity, urgency) VALUES ($1, $2, $3, $4, $5, $6)',

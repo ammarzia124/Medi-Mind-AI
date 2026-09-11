@@ -1,40 +1,28 @@
-import { SymptomAnalysis, LabAnalysis, validateOrThrow, SymptomAnalysisSchema, LabAnalysisSchema } from '../validators/schemas';
-import { config } from '../config';
-
 /**
- * AI Service - Handles integration with AI/ML models for health analysis
+ * Mock AI Provider
  * 
- * CRITICAL SAFETY RULES:
- * 1. NEVER provides medical diagnoses
- * 2. All output is validated through Zod before returning
- * 3. Uses probabilistic language: "This may be associated with..."
- * 4. For emergencies, clearly advises immediate medical care
- * 5. NEVER encourages users to delay emergency treatment
- * 
- * In production, this would connect to:
- * - OpenAI GPT-4 for natural language analysis
- * - Custom trained models for symptom classification
- * - Medical knowledge bases for evidence-based recommendations
+ * Rule-based AI provider for development and testing.
+ * Uses predefined responses based on keyword matching.
  */
-export class AIService {
-  private apiKey: string;
-  private model: string;
 
-  constructor() {
-    this.apiKey = config.ai.apiKey;
-    this.model = config.ai.model;
+import { AIProvider, AIProviderConfig } from './AIProvider';
+import { SymptomAnalysis, LabAnalysis } from '../../validators/schemas';
+
+export class MockAIProvider implements AIProvider {
+  readonly name = 'mock';
+  private config: AIProviderConfig;
+
+  constructor(config: AIProviderConfig) {
+    this.config = config;
   }
 
   async analyzeSymptoms(input: string): Promise<SymptomAnalysis> {
-    // TODO: Implement actual AI integration
-    // For now, use rule-based analysis with cautious language
-    
     const lower = input.toLowerCase();
-    let rawResult: SymptomAnalysis;
     
-    // EMERGENCY symptoms - Clear, urgent language
-    if (lower.includes('chest pain') || lower.includes('difficulty breathing') || lower.includes('severe bleeding') || lower.includes('unconscious')) {
-      rawResult = {
+    // EMERGENCY symptoms
+    if (lower.includes('chest pain') || lower.includes('difficulty breathing') || 
+        lower.includes('severe bleeding') || lower.includes('unconscious')) {
+      return {
         severity: 5,
         urgency: 'emergency',
         summary: 'These symptoms may be consistent with a serious medical condition that requires immediate emergency medical evaluation. It is impossible to determine the exact cause without proper medical examination.',
@@ -57,8 +45,11 @@ export class AIService {
         ],
         disclaimer: '⚕️ This information is for educational purposes only and is NOT a medical diagnosis. For chest pain or difficulty breathing, seek emergency medical care immediately.',
       };
-    } else if (lower.includes('headache')) {
-      rawResult = {
+    }
+    
+    // Headache
+    if (lower.includes('headache')) {
+      return {
         severity: 2,
         urgency: 'self_care',
         summary: 'Headaches can have many causes. Most are related to common factors like stress, dehydration, or lack of sleep. However, persistent or severe headaches may warrant medical attention.',
@@ -83,8 +74,11 @@ export class AIService {
         ],
         disclaimer: '⚕️ This information is for educational purposes only and is NOT a medical diagnosis. Only a qualified healthcare professional can diagnose your condition.',
       };
-    } else if (lower.includes('fever')) {
-      rawResult = {
+    }
+    
+    // Fever
+    if (lower.includes('fever')) {
+      return {
         severity: 3,
         urgency: 'monitor',
         summary: 'Fever is your body\'s way of responding to infection or illness. While often a sign that your immune system is working, persistent or high fever may indicate a condition that needs medical evaluation.',
@@ -108,44 +102,39 @@ export class AIService {
         ],
         disclaimer: '⚕️ This information is for educational purposes only and is NOT a medical diagnosis. Only a qualified healthcare professional can diagnose your condition.',
       };
-    } else {
-      // Default response with cautious language
-      rawResult = {
-        severity: 2,
-        urgency: 'self_care',
-        summary: 'Based on your description, this appears to possibly be a mild condition. However, only a healthcare professional can provide a proper diagnosis after evaluation.',
-        possible_explanations: [
-          'This may be associated with a common viral illness',
-          'Stress-related symptoms are possible',
-          'Environmental factors may play a role',
-        ],
-        warning_signs: [
-          '⚠️ Symptoms worsening over time',
-          '⚠️ New or unusual symptoms developing',
-          '⚠️ Symptoms persisting more than a week',
-        ],
-        recommended_action: 'Monitor your symptoms. If they worsen, persist, or if you develop new concerning symptoms, please consult a healthcare professional.',
-        self_care: [
-          '🛌 Rest and stay hydrated',
-          '🥗 Eat nutritious meals',
-          '📝 Monitor your symptoms and note any changes',
-        ],
-        disclaimer: '⚕️ This information is for educational purposes only and is NOT a medical diagnosis. Only a qualified healthcare professional can diagnose your condition.',
-      };
     }
     
-    // CRITICAL: Validate output through Zod before returning
-    // This ensures invalid AI output NEVER reaches the client
-    return validateOrThrow(SymptomAnalysisSchema, rawResult, 'symptom analysis');
+    // Default response
+    return {
+      severity: 2,
+      urgency: 'self_care',
+      summary: 'Based on your description, this appears to possibly be a mild condition. However, only a healthcare professional can provide a proper diagnosis after evaluation.',
+      possible_explanations: [
+        'This may be associated with a common viral illness',
+        'Stress-related symptoms are possible',
+        'Environmental factors may play a role',
+      ],
+      warning_signs: [
+        '⚠️ Symptoms worsening over time',
+        '⚠️ New or unusual symptoms developing',
+        '⚠️ Symptoms persisting more than a week',
+      ],
+      recommended_action: 'Monitor your symptoms. If they worsen, persist, or if you develop new concerning symptoms, please consult a healthcare professional.',
+      self_care: [
+        '🛌 Rest and stay hydrated',
+        '🥗 Eat nutritious meals',
+        '📝 Monitor your symptoms and note any changes',
+      ],
+      disclaimer: '⚕️ This information is for educational purposes only and is NOT a medical diagnosis. Only a qualified healthcare professional can diagnose your condition.',
+    };
   }
 
   async analyzeLabReport(input: string): Promise<LabAnalysis> {
-    // TODO: Implement actual AI integration
     const lower = input.toLowerCase();
-    let rawResult: LabAnalysis;
-
+    
+    // Cholesterol
     if (lower.includes('cholesterol') || lower.includes('ldl')) {
-      rawResult = {
+      return {
         severity: 3,
         urgency: 'doctor_soon',
         summary: 'Some of these values are outside typical reference ranges. This may suggest areas that could benefit from attention, but only a healthcare professional can assess your individual risk.',
@@ -180,8 +169,11 @@ export class AIService {
         important_note: 'Cholesterol levels are just one piece of your overall health picture. Many factors affect cardiovascular health, and treatment decisions should be made with your doctor.',
         disclaimer: '⚕️ This information is for educational purposes only and is NOT a medical diagnosis. Only a qualified healthcare professional can interpret your lab results.',
       };
-    } else if (lower.includes('vitamin d')) {
-      rawResult = {
+    }
+    
+    // Vitamin D
+    if (lower.includes('vitamin d')) {
+      return {
         severity: 2,
         urgency: 'doctor_soon',
         summary: 'This value is below the typical reference range. Low Vitamin D is very common and usually easily addressed.',
@@ -209,40 +201,47 @@ export class AIService {
         important_note: 'Vitamin D needs vary by individual. Your doctor can recommend the appropriate approach based on your specific situation.',
         disclaimer: '⚕️ This information is for educational purposes only and is NOT a medical diagnosis. Only a qualified healthcare professional can interpret your lab results.',
       };
-    } else {
-      // Default response
-      rawResult = {
-        severity: 3,
-        urgency: 'doctor_soon',
-        summary: 'Based on the information provided, these results appear generally within typical ranges. However, for a complete interpretation, specific values from your full report would be needed.',
-        results: [
-          {
-            name: 'Test Result',
-            value: '—',
-            unit: '',
-            status: 'within_reference_range',
-            what_this_may_mean: 'Based on the information provided, this appears to be within acceptable ranges. However, complete interpretation requires the full lab report.',
-          },
-        ],
-        warning_signs: [
-          '⚠️ Any result marked as abnormal should be discussed with your doctor',
-          '⚠️ Lab results should never be interpreted in isolation',
-          '⚠️ Reference ranges vary between laboratories',
-        ],
-        recommended_action: 'Discuss these results with your doctor at your next visit. They can provide proper interpretation in the context of your overall health.',
-        next_steps: [
-          '📋 Share specific values from your full report for more detailed insights',
-          '👨‍⚕️ Discuss these results with your doctor',
-          '📁 Keep a copy of your results for your records',
-        ],
-        important_note: 'Lab results should always be interpreted by a healthcare professional who knows your medical history and can consider all relevant factors.',
-        disclaimer: '⚕️ This information is for educational purposes only and is NOT a medical diagnosis. Only a qualified healthcare professional can interpret your lab results.',
-      };
     }
     
-    // CRITICAL: Validate output through Zod before returning
-    return validateOrThrow(LabAnalysisSchema, rawResult, 'lab analysis');
+    // Default response
+    return {
+      severity: 3,
+      urgency: 'doctor_soon',
+      summary: 'Based on the information provided, these results appear generally within typical ranges. However, for a complete interpretation, specific values from your full report would be needed.',
+      results: [
+        {
+          name: 'Test Result',
+          value: '—',
+          unit: '',
+          status: 'within_reference_range',
+          what_this_may_mean: 'Based on the information provided, this appears to be within acceptable ranges. However, complete interpretation requires the full lab report.',
+        },
+      ],
+      warning_signs: [
+        '⚠️ Any result marked as abnormal should be discussed with your doctor',
+        '⚠️ Lab results should never be interpreted in isolation',
+        '⚠️ Reference ranges vary between laboratories',
+      ],
+      recommended_action: 'Discuss these results with your doctor at your next visit. They can provide proper interpretation in the context of your overall health.',
+      next_steps: [
+        '📋 Share specific values from your full report for more detailed insights',
+        '👨‍⚕️ Discuss these results with your doctor',
+        '📁 Keep a copy of your results for your records',
+      ],
+      important_note: 'Lab results should always be interpreted by a healthcare professional who knows your medical history and can consider all relevant factors.',
+      disclaimer: '⚕️ This information is for educational purposes only and is NOT a medical diagnosis. Only a qualified healthcare professional can interpret your lab results.',
+    };
+  }
+
+  async isAvailable(): Promise<boolean> {
+    return true;
+  }
+
+  getConfig(): AIProviderConfig {
+    return this.config;
   }
 }
 
-export const aiService = new AIService();
+export const MockAIProviderFactory = {
+  create: (config: AIProviderConfig) => new MockAIProvider(config),
+};
