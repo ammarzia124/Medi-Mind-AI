@@ -1,6 +1,18 @@
 import { LabAnalysis } from '../../types';
 import { aiService } from '../ai/aiService';
 
+/**
+ * Lab Service
+ * 
+ * IMPORTANT: This service NEVER provides medical diagnoses.
+ * All responses use probabilistic, non-definitive language:
+ * - "This may be associated with..." (NOT "You have...")
+ * - "This value may suggest..." (NOT "This means...")
+ * - "These results may indicate..." (NOT "You have...")
+ * 
+ * Lab results are always presented as requiring professional
+ * interpretation by a qualified healthcare provider.
+ */
 export class LabService {
   async analyzeLabReport(input: string): Promise<LabAnalysis> {
     // Use AI service for analysis
@@ -14,15 +26,15 @@ export class LabService {
 
   async getLabHistory(userId: string): Promise<any[]> {
     // TODO: Fetch from database
-    // return await db.query('SELECT * FROM lab_analyses WHERE user_id = $1 ORDER BY created_at DESC', [userId]);
+    // return await db.query('SELECT * FROM consultations WHERE user_id = $1 AND type = $2 ORDER BY created_at DESC', [userId, 'lab_report']);
     return [];
   }
 
   private async saveToDatabase(userId: string, input: string, result: LabAnalysis): Promise<void> {
     // TODO: Implement database save
     // await db.query(
-    //   'INSERT INTO lab_analyses (user_id, input_text, result) VALUES ($1, $2, $3)',
-    //   [userId, input, JSON.stringify(result)]
+    //   'INSERT INTO consultations (user_id, type, user_input, ai_response) VALUES ($1, $2, $3, $4)',
+    //   [userId, 'lab_report', input, JSON.stringify(result)]
     // );
   }
 }

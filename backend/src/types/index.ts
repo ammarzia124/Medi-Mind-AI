@@ -1,9 +1,10 @@
 export interface SymptomResult {
-  causes: string[];
+  possibleExplanations: string[];
   severity: 'low' | 'moderate' | 'high';
-  recommendation: string;
-  whenToSeeDoctor: string;
-  selfCare: string[];
+  whatThisMaySuggest: string;
+  warningSigns: string[];
+  suggestedNextStep: string;
+  selfCareOptions: string[];
   careNavigation: 'emergency' | 'urgent' | 'routine' | 'selfCare';
 }
 
@@ -12,13 +13,15 @@ export interface LabResult {
   value: string;
   unit: string;
   status: 'normal' | 'abnormal' | 'critical';
-  explanation: string;
+  whatThisMayMean: string;
 }
 
 export interface LabAnalysis {
   results: LabResult[];
   summary: string;
+  whatThisMaySuggest: string;
   nextSteps: string[];
+  importantNote: string;
 }
 
 export interface TimelineEntry {

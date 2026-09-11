@@ -16,77 +16,232 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface SymptomResult {
-  causes: string[];
+  possibleExplanations: string[];
   severity: 'low' | 'moderate' | 'high';
-  recommendation: string;
-  whenToSeeDoctor: string;
-  selfCare: string[];
+  whatThisMaySuggest: string;
+  warningSigns: string[];
+  suggestedNextStep: string;
+  selfCareOptions: string[];
   careNavigation: 'emergency' | 'urgent' | 'routine' | 'selfCare';
+  emergencyMessage?: string;
 }
 
 const symptomDatabase: Record<string, SymptomResult> = {
   headache: {
-    causes: ['Tension or stress', 'Dehydration', 'Lack of sleep', 'Eye strain from screens', 'Sinus pressure'],
+    possibleExplanations: [
+      'This may be associated with tension or stress',
+      'Dehydration can sometimes cause headaches',
+      'Lack of sleep may contribute to this symptom',
+      'Eye strain from screens is a common factor',
+      'Sinus pressure may be a possible cause',
+    ],
     severity: 'low',
-    recommendation: 'Most headaches are caused by common factors like stress or dehydration. Try resting in a dark room and drinking water.',
-    whenToSeeDoctor: 'See a doctor if the headache is severe, sudden, or accompanied by vision changes, fever, or neck stiffness.',
-    selfCare: ['Drink plenty of water', 'Rest in a quiet, dark room', 'Apply a cold compress to your forehead', 'Take over-the-counter pain relief if needed', 'Reduce screen time'],
+    whatThisMaySuggest: 'Headaches can have many causes. Most are related to common factors like stress, dehydration, or lack of sleep. However, persistent or severe headaches may warrant medical attention.',
+    warningSigns: [
+      '⚠️ Sudden, severe headache (worst headache of your life)',
+      '⚠️ Headache with vision changes or confusion',
+      '⚠️ Headache with fever and stiff neck',
+      '⚠️ Headache after head injury',
+      '⚠️ Headache that worsens over time',
+    ],
+    suggestedNextStep: 'If this is a new or unusual headache, or if you experience any warning signs above, please consult a healthcare professional.',
+    selfCareOptions: [
+      '💧 Stay hydrated by drinking water',
+      '🛌 Rest in a quiet, dark room',
+      '🧊 Apply a cold compress to your forehead',
+      '💊 Over-the-counter pain relief may help (follow package directions)',
+      '👀 Reduce screen time and take breaks',
+    ],
     careNavigation: 'selfCare',
   },
   fever: {
-    causes: ['Viral infection (cold/flu)', 'Bacterial infection', 'Inflammatory condition', 'Reaction to medication', 'Heat exhaustion'],
+    possibleExplanations: [
+      'This may be associated with a viral infection (cold/flu)',
+      'Bacterial infections can cause fever',
+      'Inflammatory conditions may present with fever',
+      'Some medications can cause fever as a side effect',
+      'Heat exhaustion is another possibility',
+    ],
     severity: 'moderate',
-    recommendation: 'A fever is your body\'s way of fighting infection. Monitor your temperature and stay hydrated.',
-    whenToSeeDoctor: 'See a doctor if fever exceeds 103°F (39.4°C), lasts more than 3 days, or is accompanied by severe headache, rash, or difficulty breathing.',
-    selfCare: ['Rest and stay hydrated', 'Take lukewarm baths', 'Wear light clothing', 'Use fever-reducing medication as directed', 'Monitor temperature regularly'],
+    whatThisMaySuggest: 'Fever is your body\'s way of responding to infection or illness. While often a sign that your immune system is working, persistent or high fever may indicate a condition that needs medical evaluation.',
+    warningSigns: [
+      '⚠️ Temperature above 103°F (39.4°C)',
+      '⚠️ Fever lasting more than 3 days',
+      '⚠️ Severe headache with fever',
+      '⚠️ Rash appearing with fever',
+      '⚠️ Difficulty breathing',
+      '⚠️ Confusion or extreme drowsiness',
+    ],
+    suggestedNextStep: 'Monitor your temperature and symptoms. If you experience any warning signs or if fever persists, please seek medical care.',
+    selfCareOptions: [
+      '💧 Rest and stay well-hydrated',
+      '🛁 Take lukewarm baths to help reduce temperature',
+      '👕 Wear light, breathable clothing',
+      '💊 Fever-reducing medication as directed on package',
+      '🌡️ Monitor temperature regularly',
+    ],
     careNavigation: 'routine',
   },
   cough: {
-    causes: ['Common cold', 'Allergies', 'Dry air', 'Acid reflux', 'Asthma'],
+    possibleExplanations: [
+      'This may be associated with a common cold',
+      'Allergies can cause coughing',
+      'Dry air may irritate your throat',
+      'Acid reflux is sometimes a cause',
+      'Asthma may present with cough',
+    ],
     severity: 'low',
-    recommendation: 'Most coughs are caused by viral infections and resolve on their own within 1-2 weeks.',
-    whenToSeeDoctor: 'See a doctor if cough lasts more than 3 weeks, produces blood, or is accompanied by chest pain or difficulty breathing.',
-    selfCare: ['Stay hydrated with warm fluids', 'Use honey (for adults) to soothe throat', 'Use a humidifier', 'Avoid irritants like smoke', 'Rest your voice'],
+    whatThisMaySuggest: 'Cough is a common symptom that can have many causes. Most coughs from viral infections resolve on their own within 1-2 weeks, but persistent cough may need evaluation.',
+    warningSigns: [
+      '⚠️ Cough lasting more than 3 weeks',
+      '⚠️ Coughing up blood',
+      '⚠️ Chest pain with coughing',
+      '⚠️ Difficulty breathing or wheezing',
+      '⚠️ High fever with cough',
+    ],
+    suggestedNextStep: 'If your cough persists, worsens, or is accompanied by warning signs, please consult a healthcare professional.',
+    selfCareOptions: [
+      '💧 Stay hydrated with warm fluids',
+      '🍯 Honey may help soothe throat (for adults and children over 1 year)',
+      '💨 Use a humidifier to add moisture to air',
+      '🚭 Avoid irritants like smoke',
+      '🗣️ Rest your voice',
+    ],
     careNavigation: 'selfCare',
   },
   fatigue: {
-    causes: ['Poor sleep quality', 'Stress or anxiety', 'Iron deficiency (anemia)', 'Dehydration', 'Thyroid issues'],
+    possibleExplanations: [
+      'This may be associated with poor sleep quality',
+      'Stress or anxiety can cause fatigue',
+      'Iron deficiency (anemia) is a possible cause',
+      'Dehydration may contribute to tiredness',
+      'Thyroid issues can sometimes present as fatigue',
+    ],
     severity: 'moderate',
-    recommendation: 'Persistent fatigue may indicate an underlying condition. Consider getting basic blood work done.',
-    whenToSeeDoctor: 'See a doctor if fatigue persists for more than 2 weeks despite adequate rest, or is accompanied by weight changes or mood changes.',
-    selfCare: ['Maintain a consistent sleep schedule', 'Exercise regularly (even light walks)', 'Eat balanced meals', 'Stay hydrated', 'Manage stress through relaxation techniques'],
+    whatThisMaySuggest: 'Fatigue can have many underlying causes. While often related to lifestyle factors, persistent fatigue may indicate a condition that would benefit from medical evaluation.',
+    warningSigns: [
+      '⚠️ Fatigue persisting more than 2 weeks despite rest',
+      '⚠️ Unexplained weight changes',
+      '⚠️ Significant mood changes',
+      '⚠️ Difficulty concentrating',
+      '⚠️ Fatigue interfering with daily activities',
+    ],
+    suggestedNextStep: 'If fatigue persists or is affecting your daily life, consider scheduling a visit with a healthcare professional for evaluation.',
+    selfCareOptions: [
+      '😴 Maintain a consistent sleep schedule',
+      '🚶‍♂️ Exercise regularly (even light walks can help)',
+      '🥗 Eat balanced, nutritious meals',
+      '💧 Stay well-hydrated',
+      '🧘‍♀️ Practice stress management techniques',
+    ],
     careNavigation: 'routine',
   },
   chest: {
-    causes: ['Muscle strain', 'Anxiety or panic', 'Acid reflux (GERD)', 'Costochondritis', 'Cardiac concerns'],
+    possibleExplanations: [
+      'This may be associated with muscle strain',
+      'Anxiety or panic can cause chest discomfort',
+      'Acid reflux (GERD) is a common cause',
+      'Costochondritis (rib cartilage inflammation) is possible',
+      '⚠️ Cardiac concerns must be considered',
+    ],
     severity: 'high',
-    recommendation: 'Chest pain should always be taken seriously. While many causes are not dangerous, some require immediate attention.',
-    whenToSeeDoctor: 'Seek emergency care immediately if chest pain is severe, radiates to arm/jaw, or is accompanied by shortness of breath, sweating, or dizziness.',
-    selfCare: ['If mild and muscular: rest and avoid strain', 'Practice deep breathing', 'Avoid heavy meals if reflux-related', 'Note when pain occurs and what triggers it'],
+    whatThisMaySuggest: 'Chest pain or discomfort should ALWAYS be taken seriously. While many causes are not dangerous, some require immediate emergency medical attention. It is impossible to determine the cause without proper medical evaluation.',
+    warningSigns: [
+      '🚨 SEVERE chest pain or pressure',
+      '🚨 Pain radiating to arm, jaw, neck, or back',
+      '🚨 Shortness of breath',
+      '🚨 Sweating, nausea, or dizziness',
+      '🚨 Pain that comes on suddenly',
+    ],
+    suggestedNextStep: 'DO NOT DELAY. If you are experiencing severe chest pain or any warning signs above, seek emergency medical care IMMEDIATELY. Call emergency services (911 in US, 112 in Europe, 999 in UK) or go to the nearest emergency room.',
+    selfCareOptions: [
+      '🚨 DO NOT attempt to drive yourself if experiencing severe symptoms',
+      '📞 Call emergency services immediately',
+      '🪑 Sit or lie down in a comfortable position',
+      '🧘‍♂️ Try to stay calm while waiting for help',
+    ],
     careNavigation: 'emergency',
+    emergencyMessage: '🚨 POSSIBLE MEDICAL EMERGENCY: Chest pain can be a sign of a serious condition. Seek emergency medical care IMMEDIATELY. Do not delay treatment.',
   },
   stomach: {
-    causes: ['Indigestion', 'Food intolerance', 'Gastritis', 'Stress', 'Viral gastroenteritis'],
+    possibleExplanations: [
+      'This may be associated with indigestion',
+      'Food intolerance is a possible cause',
+      'Gastritis (stomach inflammation) may be involved',
+      'Stress can affect digestion',
+      'Viral gastroenteritis is another possibility',
+    ],
     severity: 'low',
-    recommendation: 'Most stomach discomfort is related to diet or mild infections. Focus on gentle foods and hydration.',
-    whenToSeeDoctor: 'See a doctor if pain is severe, persistent (more than a few days), or accompanied by blood in stool, unexplained weight loss, or persistent vomiting.',
-    selfCare: ['Eat small, bland meals (BRAT diet)', 'Stay hydrated with clear fluids', 'Avoid spicy, fatty, or acidic foods', 'Rest', 'Ginger tea may help with nausea'],
+    whatThisMaySuggest: 'Stomach discomfort can have many causes, often related to diet or mild infections. Most cases resolve with rest and gentle care, but some symptoms may need medical evaluation.',
+    warningSigns: [
+      '⚠️ Severe or worsening pain',
+      '⚠️ Blood in stool or vomit',
+      '⚠️ Unexplained weight loss',
+      '⚠️ Persistent vomiting (more than 24 hours)',
+      '⚠️ Pain lasting more than a few days',
+    ],
+    suggestedNextStep: 'If you experience warning signs or if symptoms persist, please consult a healthcare professional.',
+    selfCareOptions: [
+      '🍞 Eat small, bland meals (BRAT diet: Bananas, Rice, Applesauce, Toast)',
+      '💧 Stay hydrated with clear fluids',
+      '🚫 Avoid spicy, fatty, or acidic foods temporarily',
+      '🛌 Get adequate rest',
+      '🫚 Ginger tea may help with nausea',
+    ],
     careNavigation: 'selfCare',
   },
   back: {
-    causes: ['Muscle strain', 'Poor posture', 'Herniated disc', 'Sedentary lifestyle', 'Age-related changes'],
+    possibleExplanations: [
+      'This may be associated with muscle strain',
+      'Poor posture can contribute to back pain',
+      'Herniated disc is a possible cause',
+      'Sedentary lifestyle may be a factor',
+      'Age-related changes can affect the back',
+    ],
     severity: 'moderate',
-    recommendation: 'Back pain is very common and often related to posture or muscle strain. Gentle movement usually helps more than rest.',
-    whenToSeeDoctor: 'See a doctor if pain radiates down the leg, causes numbness/weakness, or follows an injury. Seek urgent care if you lose bladder/bowel control.',
-    selfCare: ['Apply heat or ice to the affected area', 'Gentle stretching and walking', 'Maintain good posture', 'Avoid prolonged sitting', 'Sleep on a supportive mattress'],
+    whatThisMaySuggest: 'Back pain is very common and often related to posture or muscle strain. While usually not serious, some types of back pain may need medical evaluation.',
+    warningSigns: [
+      '⚠️ Pain radiating down the leg',
+      '⚠️ Numbness or weakness in legs',
+      '⚠️ Pain following an injury',
+      '⚠️ Loss of bladder or bowel control (EMERGENCY)',
+      '⚠️ Pain that doesn\'t improve with rest',
+    ],
+    suggestedNextStep: 'If you experience warning signs, especially loss of bladder/bowel control, seek medical care immediately. For persistent pain, consider scheduling a visit with a healthcare professional.',
+    selfCareOptions: [
+      '🔥 Apply heat or ice to the affected area',
+      '🚶‍♂️ Gentle stretching and walking may help',
+      '🪑 Maintain good posture',
+      '⏰ Avoid prolonged sitting',
+      '🛏️ Sleep on a supportive mattress',
+    ],
     careNavigation: 'routine',
   },
   default: {
-    causes: ['Common viral illness', 'Stress-related symptoms', 'Environmental factors', 'Mild allergic reaction', 'Temporary imbalance'],
+    possibleExplanations: [
+      'This may be associated with a common viral illness',
+      'Stress-related symptoms are possible',
+      'Environmental factors may play a role',
+      'Mild allergic reaction is a possibility',
+      'Temporary imbalance may be a factor',
+    ],
     severity: 'low',
-    recommendation: 'Based on your description, this appears to be a mild condition. Monitor your symptoms and practice self-care.',
-    whenToSeeDoctor: 'See a doctor if symptoms worsen, persist for more than a week, or if you develop new concerning symptoms.',
-    selfCare: ['Rest and stay hydrated', 'Eat nutritious meals', 'Monitor your symptoms', 'Avoid strenuous activity', 'Keep a symptom diary'],
+    whatThisMaySuggest: 'Based on your description, this appears to possibly be a mild condition. However, only a healthcare professional can provide a proper diagnosis after evaluation.',
+    warningSigns: [
+      '⚠️ Symptoms worsening over time',
+      '⚠️ New or unusual symptoms developing',
+      '⚠️ Symptoms persisting more than a week',
+      '⚠️ Symptoms interfering with daily activities',
+      '⚠️ High fever or severe pain',
+    ],
+    suggestedNextStep: 'Monitor your symptoms. If they worsen, persist, or if you develop new concerning symptoms, please consult a healthcare professional.',
+    selfCareOptions: [
+      '🛌 Rest and stay hydrated',
+      '🥗 Eat nutritious meals',
+      '📝 Monitor your symptoms and note any changes',
+      '🏃‍♂️ Avoid strenuous activity if feeling unwell',
+      '📓 Keep a symptom diary to track patterns',
+    ],
     careNavigation: 'selfCare',
   }
 };
@@ -247,35 +402,59 @@ export function SymptomChecker() {
             exit={{ opacity: 0, y: -20 }}
             className="space-y-4"
           >
-            {/* Care Navigation Banner */}
-            <div className={`border rounded-2xl p-5 ${getCareNavigationColor(result.careNavigation)}`}>
-              <div className="flex items-center gap-3">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                  result.careNavigation === 'emergency' ? 'bg-critical/20' :
-                  result.careNavigation === 'urgent' ? 'bg-warning/20' :
-                  result.careNavigation === 'routine' ? 'bg-info/20' : 'bg-success/20'
-                }`}>
-                  {result.careNavigation === 'emergency' && <AlertTriangle className="w-5 h-5" />}
-                  {result.careNavigation === 'urgent' && <AlertTriangle className="w-5 h-5" />}
-                  {result.careNavigation === 'routine' && <Heart className="w-5 h-5" />}
-                  {result.careNavigation === 'selfCare' && <CheckCircle className="w-5 h-5" />}
-                </div>
-                <div>
-                  <p className="font-semibold text-sm">
-                    {result.careNavigation === 'emergency' && t('visitER')}
-                    {result.careNavigation === 'urgent' && t('visitUrgent')}
-                    {result.careNavigation === 'routine' && t('visitDoctor')}
-                    {result.careNavigation === 'selfCare' && t('homeRemedy')}
-                  </p>
-                  <p className="text-xs opacity-80 mt-0.5">
-                    {result.careNavigation === 'emergency' ? t('emergency') :
-                     result.careNavigation === 'urgent' ? t('urgent') :
-                     result.careNavigation === 'routine' ? t('routine') :
-                     t('selfCare')}
-                  </p>
+            {/* Emergency Banner - Most Prominent */}
+            {result.careNavigation === 'emergency' && result.emergencyMessage && (
+              <div className="bg-critical border-2 border-critical rounded-2xl p-6 animate-pulse">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 rounded-full bg-critical/20 flex items-center justify-center flex-shrink-0">
+                    <AlertTriangle className="w-6 h-6 text-critical" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-bold text-critical text-lg mb-2">
+                      {language === 'en' ? 'POSSIBLE MEDICAL EMERGENCY' : 'ممکنہ طبی ہنگامی صورتحال'}
+                    </h3>
+                    <p className="text-critical font-semibold leading-relaxed">
+                      {result.emergencyMessage}
+                    </p>
+                    <div className="mt-4 p-3 bg-white/90 rounded-xl">
+                      <p className="text-sm font-bold text-text-primary">
+                        {language === 'en' 
+                          ? '📞 Call emergency services NOW or go to the nearest emergency room. Do not delay.'
+                          : '📞 ابھی ایمرجنسی سروسز کو کال کریں یا قریب ترین ایمرجنسی روم جائیں۔ تاخیر نہ کریں۔'}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
+
+            {/* Care Navigation Banner */}
+            {result.careNavigation !== 'emergency' && (
+              <div className={`border rounded-2xl p-5 ${getCareNavigationColor(result.careNavigation)}`}>
+                <div className="flex items-center gap-3">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                    result.careNavigation === 'urgent' ? 'bg-warning/20' :
+                    result.careNavigation === 'routine' ? 'bg-info/20' : 'bg-success/20'
+                  }`}>
+                    {result.careNavigation === 'urgent' && <AlertTriangle className="w-5 h-5" />}
+                    {result.careNavigation === 'routine' && <Heart className="w-5 h-5" />}
+                    {result.careNavigation === 'selfCare' && <CheckCircle className="w-5 h-5" />}
+                  </div>
+                  <div>
+                    <p className="font-semibold text-sm">
+                      {result.careNavigation === 'urgent' && t('visitUrgent')}
+                      {result.careNavigation === 'routine' && t('visitDoctor')}
+                      {result.careNavigation === 'selfCare' && t('homeRemedy')}
+                    </p>
+                    <p className="text-xs opacity-80 mt-0.5">
+                      {result.careNavigation === 'urgent' ? t('urgent') :
+                       result.careNavigation === 'routine' ? t('routine') :
+                       t('selfCare')}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Severity */}
             <div className="bg-surface border border-border rounded-2xl p-5">
@@ -293,45 +472,59 @@ export function SymptomChecker() {
               </div>
             </div>
 
-            {/* Possible Causes */}
+            {/* Possible Explanations */}
             <div className="bg-surface border border-border rounded-2xl p-5">
-              <h3 className="text-sm font-medium text-text-secondary mb-3">{t('possibleCauses')}</h3>
+              <h3 className="text-sm font-medium text-text-secondary mb-3">{t('possibleExplanations')}</h3>
               <div className="space-y-2">
-                {result.causes.map((cause, idx) => (
-                  <div key={idx} className="flex items-center gap-3 p-2 rounded-lg hover:bg-background transition-colors">
-                    <div className="w-2 h-2 rounded-full bg-primary-light" />
-                    <span className="text-sm text-text-primary">{cause}</span>
+                {result.possibleExplanations.map((explanation, idx) => (
+                  <div key={idx} className="flex items-start gap-3 p-2 rounded-lg hover:bg-background transition-colors">
+                    <div className="w-2 h-2 rounded-full bg-primary-light mt-2 flex-shrink-0" />
+                    <span className="text-sm text-text-primary">{explanation}</span>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Recommendation */}
+            {/* What This May Suggest */}
             <div className="bg-surface border border-border rounded-2xl p-5">
-              <h3 className="text-sm font-medium text-text-secondary mb-3">{t('recommendation')}</h3>
-              <p className="text-sm text-text-primary leading-relaxed">{result.recommendation}</p>
+              <h3 className="text-sm font-medium text-text-secondary mb-3">{t('whatThisMaySuggest')}</h3>
+              <p className="text-sm text-text-primary leading-relaxed">{result.whatThisMaySuggest}</p>
             </div>
 
-            {/* When to See Doctor */}
+            {/* Warning Signs */}
             <div className="bg-warning/5 border border-warning/20 rounded-2xl p-5">
               <h3 className="text-sm font-medium text-warning mb-3 flex items-center gap-2">
                 <AlertTriangle className="w-4 h-4" />
-                {t('whenToSeeDoctor')}
+                {t('warningSigns')}
               </h3>
-              <p className="text-sm text-text-primary leading-relaxed">{result.whenToSeeDoctor}</p>
+              <div className="space-y-2">
+                {result.warningSigns.map((sign, idx) => (
+                  <div key={idx} className="flex items-start gap-3 p-2">
+                    <span className="text-sm text-text-primary leading-relaxed">{sign}</span>
+                  </div>
+                ))}
+              </div>
             </div>
 
-            {/* Self Care */}
+            {/* Suggested Next Step */}
+            <div className="bg-info/5 border border-info/20 rounded-2xl p-5">
+              <h3 className="text-sm font-medium text-info mb-3 flex items-center gap-2">
+                <Heart className="w-4 h-4" />
+                {t('suggestedNextStep')}
+              </h3>
+              <p className="text-sm text-text-primary leading-relaxed">{result.suggestedNextStep}</p>
+            </div>
+
+            {/* Self Care Options */}
             <div className="bg-success/5 border border-success/20 rounded-2xl p-5">
               <h3 className="text-sm font-medium text-success mb-3 flex items-center gap-2">
                 <CheckCircle className="w-4 h-4" />
-                {t('selfCareTips')}
+                {t('selfCareOptions')}
               </h3>
               <div className="space-y-2">
-                {result.selfCare.map((tip, idx) => (
+                {result.selfCareOptions.map((option, idx) => (
                   <div key={idx} className="flex items-start gap-3 p-2">
-                    <span className="text-success mt-0.5">✓</span>
-                    <span className="text-sm text-text-primary">{tip}</span>
+                    <span className="text-sm text-text-primary">{option}</span>
                   </div>
                 ))}
               </div>

@@ -10,7 +10,7 @@ import {
   XCircle,
   FileText,
   TrendingUp,
-  TrendingDown
+  Info
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -19,63 +19,111 @@ interface LabResult {
   value: string;
   unit: string;
   status: 'normal' | 'abnormal' | 'critical';
-  explanation: string;
+  whatThisMayMean: string;
 }
 
 interface LabAnalysis {
   results: LabResult[];
   summary: string;
+  whatThisMaySuggest: string;
   nextSteps: string[];
+  importantNote: string;
 }
 
 const labDatabase: Record<string, LabAnalysis> = {
   hemoglobin: {
     results: [
-      { name: 'Hemoglobin', value: '12.5', unit: 'g/dL', status: 'normal', explanation: 'Your hemoglobin level is within the normal range. This protein in red blood cells carries oxygen throughout your body.' },
-      { name: 'Red Blood Cell Count', value: '4.7', unit: 'million/µL', status: 'normal', explanation: 'Your RBC count is normal, indicating healthy production of red blood cells.' },
+      { name: 'Hemoglobin', value: '12.5', unit: 'g/dL', status: 'normal', whatThisMayMean: 'This value falls within the typical reference range. Hemoglobin helps carry oxygen in your blood.' },
+      { name: 'Red Blood Cell Count', value: '4.7', unit: 'million/µL', status: 'normal', whatThisMayMean: 'This appears to be within the typical range, suggesting normal red blood cell production.' },
     ],
-    summary: 'Your blood count results look healthy. Hemoglobin and red blood cell counts are within normal ranges, meaning your body is getting adequate oxygen.',
-    nextSteps: ['Continue maintaining a balanced diet rich in iron', 'Stay hydrated', 'Next routine blood test in 6-12 months', 'No immediate action needed'],
+    summary: 'These values appear to be within typical reference ranges. However, reference ranges can vary by lab, age, and sex.',
+    whatThisMaySuggest: 'Based on these values, there may not be immediate concerns. However, only your doctor can interpret these results in the context of your overall health, medical history, and other factors.',
+    nextSteps: [
+      '📋 Discuss these results with your doctor at your next appointment',
+      '💧 Continue maintaining a balanced diet',
+      '🏃‍♂️ Stay active and hydrated',
+      '📅 Follow your doctor\'s recommended schedule for future tests',
+    ],
+    importantNote: 'Lab results should always be interpreted by a healthcare professional who knows your medical history. Reference ranges vary between laboratories.',
   },
   cholesterol: {
     results: [
-      { name: 'Total Cholesterol', value: '240', unit: 'mg/dL', status: 'abnormal', explanation: 'Your total cholesterol is slightly above the recommended level (below 200 mg/dL). This may increase cardiovascular risk over time.' },
-      { name: 'LDL (Bad Cholesterol)', value: '155', unit: 'mg/dL', status: 'abnormal', explanation: 'LDL cholesterol is above optimal (below 100 mg/dL). High LDL can build up in arteries.' },
-      { name: 'HDL (Good Cholesterol)', value: '45', unit: 'mg/dL', status: 'normal', explanation: 'HDL cholesterol is within acceptable range (above 40 mg/dL). This helps remove bad cholesterol.' },
-      { name: 'Triglycerides', value: '180', unit: 'mg/dL', status: 'abnormal', explanation: 'Triglycerides are slightly elevated (normal below 150 mg/dL). This is often related to diet.' },
+      { name: 'Total Cholesterol', value: '240', unit: 'mg/dL', status: 'abnormal', whatThisMayMean: 'This value is above the typical recommended level (below 200 mg/dL). Elevated cholesterol may be associated with increased cardiovascular risk over time.' },
+      { name: 'LDL (Bad Cholesterol)', value: '155', unit: 'mg/dL', status: 'abnormal', whatThisMayMean: 'This is above the typical optimal level (below 100 mg/dL). Higher LDL levels may be associated with plaque buildup in arteries.' },
+      { name: 'HDL (Good Cholesterol)', value: '45', unit: 'mg/dL', status: 'normal', whatThisMayMean: 'This appears to be within the acceptable range (above 40 mg/dL). HDL may help remove other forms of cholesterol.' },
+      { name: 'Triglycerides', value: '180', unit: 'mg/dL', status: 'abnormal', whatThisMayMean: 'This is above the typical range (below 150 mg/dL). Elevated triglycerides may be associated with dietary factors and other health conditions.' },
     ],
-    summary: 'Your cholesterol levels show some areas that need attention. Total cholesterol and LDL are above optimal ranges, which may increase long-term heart health risks.',
-    nextSteps: ['Schedule a follow-up with your doctor', 'Consider dietary changes (reduce saturated fats)', 'Increase physical activity (30 min/day walking)', 'Consider retesting in 3 months', 'Discuss with doctor if medication is appropriate'],
+    summary: 'Some of these values are outside typical reference ranges. This may suggest areas that could benefit from attention, but only a healthcare professional can assess your individual risk.',
+    whatThisMaySuggest: 'These results may indicate elevated cholesterol levels, which some studies have associated with long-term cardiovascular risk. However, cholesterol levels are just one factor among many that affect heart health.',
+    nextSteps: [
+      '👨‍⚕️ Schedule a follow-up with your doctor to discuss these results',
+      '🥗 Consider discussing dietary modifications with your doctor or a nutritionist',
+      '🚶‍♂️ Ask your doctor about appropriate physical activity for you',
+      '🔄 Your doctor may recommend retesting in 3-6 months',
+      '💊 Do NOT start any medication without consulting your doctor',
+    ],
+    importantNote: 'Cholesterol levels are just one piece of your overall health picture. Many factors affect cardiovascular health, and treatment decisions should be made with your doctor.',
   },
   blood_sugar: {
     results: [
-      { name: 'Fasting Blood Sugar', value: '135', unit: 'mg/dL', status: 'abnormal', explanation: 'Your fasting blood sugar is above normal (70-100 mg/dL). This range (100-125) suggests pre-diabetes, and above 126 may indicate diabetes.' },
-      { name: 'HbA1c', value: '6.2', unit: '%', status: 'abnormal', explanation: 'Your HbA1c indicates average blood sugar over 3 months. Normal is below 5.7%, pre-diabetes is 5.7-6.4%, diabetes is 6.5%+.' },
+      { name: 'Fasting Blood Sugar', value: '135', unit: 'mg/dL', status: 'abnormal', whatThisMayMean: 'This value is above the typical normal range (70-100 mg/dL). Values in this range may sometimes be associated with pre-diabetes or diabetes, but a single test is not diagnostic.' },
+      { name: 'HbA1c', value: '6.2', unit: '%', status: 'abnormal', whatThisMayMean: 'This reflects average blood sugar over approximately 3 months. According to some guidelines, this range may be associated with pre-diabetes (5.7-6.4%) or diabetes (6.5%+), but confirmation requires medical evaluation.' },
     ],
-    summary: 'Your blood sugar results indicate pre-diabetes or early diabetes. This means your body is having difficulty managing sugar levels. This is manageable with lifestyle changes.',
-    nextSteps: ['See your doctor for a comprehensive diabetes evaluation', 'Reduce sugar and refined carbohydrate intake', 'Exercise regularly (at least 150 min/week)', 'Monitor blood sugar at home if advised', 'Consider consulting a nutritionist'],
+    summary: 'These values are above typical reference ranges and may warrant further evaluation. However, blood sugar levels can be affected by many factors including recent meals, stress, and illness.',
+    whatThisMaySuggest: 'These results may suggest elevated blood sugar levels. While this can sometimes be associated with pre-diabetes or diabetes, only proper medical evaluation can determine if this is the case for you.',
+    nextSteps: [
+      '👨‍⚕️ See your doctor promptly for a comprehensive evaluation',
+      '🍎 Discuss dietary considerations with your doctor',
+      '🏃‍♂️ Ask about appropriate physical activity',
+      '📊 Your doctor may recommend additional testing for confirmation',
+      '📝 Keep a log of your symptoms and any related factors',
+    ],
+    importantNote: 'Blood sugar levels can fluctuate due to many factors. These results should be evaluated by a healthcare professional who can consider your complete medical picture.',
   },
   vitamin_d: {
     results: [
-      { name: 'Vitamin D (25-OH)', value: '18', unit: 'ng/mL', status: 'abnormal', explanation: 'Your Vitamin D level is low. Normal is 30-100 ng/mL. Vitamin D is essential for bone health, immune function, and mood.' },
+      { name: 'Vitamin D (25-OH)', value: '18', unit: 'ng/mL', status: 'abnormal', whatThisMayMean: 'This value is below the typical reference range (30-100 ng/mL). Low Vitamin D is very common and may be associated with various health factors.' },
     ],
-    summary: 'Your Vitamin D level is below optimal. This is very common and usually easily corrected with supplementation and sun exposure.',
-    nextSteps: ['Discuss Vitamin D supplementation with your doctor (typically 1000-4000 IU/day)', 'Get 15-20 minutes of sunlight daily', 'Include Vitamin D-rich foods (fatty fish, fortified milk)', 'Recheck levels in 3 months', 'No emergency — this is very common and treatable'],
+    summary: 'This value is below the typical reference range. Low Vitamin D is very common and usually easily addressed.',
+    whatThisMaySuggest: 'This result may suggest low Vitamin D levels, which is a common finding. Vitamin D is important for bone health and other bodily functions.',
+    nextSteps: [
+      '👨‍⚕️ Discuss supplementation with your doctor (typical doses range from 1000-4000 IU/day)',
+      '☀️ Ask your doctor about safe sun exposure',
+      '🐟 Consider Vitamin D-rich foods (fatty fish, fortified milk)',
+      '🔄 Your doctor may recommend rechecking levels in 3 months',
+      'ℹ️ This is very common and usually easily managed',
+    ],
+    importantNote: 'Vitamin D needs vary by individual. Your doctor can recommend the appropriate approach based on your specific situation.',
   },
   thyroid: {
     results: [
-      { name: 'TSH', value: '6.5', unit: 'mIU/L', status: 'abnormal', explanation: 'Your TSH is above normal (0.4-4.0 mIU/L). Elevated TSH suggests your thyroid may be underactive (hypothyroidism).' },
-      { name: 'Free T4', value: '0.7', unit: 'ng/dL', status: 'abnormal', explanation: 'Free T4 is slightly below normal (0.8-1.8 ng/dL), confirming possible hypothyroidism.' },
+      { name: 'TSH', value: '6.5', unit: 'mIU/L', status: 'abnormal', whatThisMayMean: 'This value is above the typical reference range (0.4-4.0 mIU/L). Elevated TSH may sometimes be associated with an underactive thyroid (hypothyroidism).' },
+      { name: 'Free T4', value: '0.7', unit: 'ng/dL', status: 'abnormal', whatThisMayMean: 'This is slightly below the typical range (0.8-1.8 ng/dL), which may sometimes support the possibility of hypothyroidism.' },
     ],
-    summary: 'Your thyroid results suggest an underactive thyroid (hypothyroidism). This is a common condition that is easily treated with daily medication.',
-    nextSteps: ['See your doctor for thyroid medication discussion', 'Medication (levothyroxine) is typically prescribed', 'Take medication on an empty stomach', 'Recheck thyroid levels in 6-8 weeks after starting treatment', 'This is very manageable — many people live well with thyroid medication'],
+    summary: 'These results may suggest thyroid function that is outside typical ranges. Thyroid conditions are common and usually manageable.',
+    whatThisMaySuggest: 'These results may be consistent with an underactive thyroid (hypothyroidism), which is a common and usually treatable condition. However, thyroid function can be affected by many factors and requires proper medical evaluation.',
+    nextSteps: [
+      '👨‍⚕️ See your doctor to discuss these results',
+      '💊 If hypothyroidism is confirmed, treatment is typically straightforward',
+      '⏰ Medication (if prescribed) is usually taken on an empty stomach',
+      '🔄 Thyroid levels are typically rechecked 6-8 weeks after starting treatment',
+      'ℹ️ Many people manage thyroid conditions successfully with proper medical care',
+    ],
+    importantNote: 'Throid function is complex and can be influenced by many factors. These results should be evaluated by a healthcare professional.',
   },
   default: {
     results: [
-      { name: 'Test Result', value: '—', unit: '', status: 'normal', explanation: 'Based on the information provided, your results appear to be within acceptable ranges.' },
+      { name: 'Test Result', value: '—', unit: '', status: 'normal', whatThisMayMean: 'Based on the information provided, this appears to be within acceptable ranges. However, complete interpretation requires the full lab report.' },
     ],
-    summary: 'Your lab results appear generally within normal ranges. However, for a complete interpretation, please share the specific values from your report.',
-    nextSteps: ['Share specific values for a detailed analysis', 'Discuss results with your doctor at your next visit', 'Keep a copy of your results for reference', 'Continue regular health check-ups'],
+    summary: 'Based on the information provided, these results appear generally within typical ranges. However, for a complete interpretation, specific values from your full report would be needed.',
+    whatThisMaySuggest: 'Without complete information, it\'s difficult to provide specific insights. Lab results should always be interpreted in the context of your overall health by a qualified healthcare professional.',
+    nextSteps: [
+      '📋 Share specific values from your full report for more detailed insights',
+      '👨‍⚕️ Discuss these results with your doctor at your next visit',
+      '📁 Keep a copy of your results for your records',
+      '📅 Continue with regular health check-ups as recommended',
+    ],
+    importantNote: 'Lab results should always be interpreted by a healthcare professional who knows your medical history and can consider all relevant factors.',
   }
 };
 
@@ -220,10 +268,21 @@ export function LabReport() {
             exit={{ opacity: 0, y: -20 }}
             className="space-y-4"
           >
+            {/* Important Note Banner */}
+            <div className="bg-info/5 border border-info/20 rounded-2xl p-5">
+              <div className="flex items-start gap-3">
+                <Info className="w-5 h-5 text-info flex-shrink-0 mt-0.5" />
+                <div>
+                  <h3 className="text-sm font-semibold text-info mb-1">Important Note</h3>
+                  <p className="text-sm text-text-primary leading-relaxed">{analysis.importantNote}</p>
+                </div>
+              </div>
+            </div>
+
             {/* Summary */}
             <div className="bg-surface border border-border rounded-2xl p-5">
-              <h3 className="text-sm font-medium text-text-secondary mb-3">{t('whatItMeans')}</h3>
-              <p className="text-sm text-text-primary leading-relaxed">{analysis.summary}</p>
+              <h3 className="text-sm font-medium text-text-secondary mb-3">{t('whatThisMaySuggestLab')}</h3>
+              <p className="text-sm text-text-primary leading-relaxed">{analysis.whatThisMaySuggest}</p>
             </div>
 
             {/* Individual Results */}
@@ -257,7 +316,10 @@ export function LabReport() {
                           <span className={`text-xs font-semibold ${status.text}`}>{status.label}</span>
                         </div>
                       </div>
-                      <p className="text-xs text-text-secondary leading-relaxed mt-2">{result.explanation}</p>
+                      <p className="text-xs text-text-secondary leading-relaxed mt-2">
+                        <span className="font-medium">What this may mean: </span>
+                        {result.whatThisMayMean}
+                      </p>
                     </motion.div>
                   );
                 })}
@@ -273,9 +335,6 @@ export function LabReport() {
               <div className="space-y-2">
                 {analysis.nextSteps.map((step, idx) => (
                   <div key={idx} className="flex items-start gap-3 p-2">
-                    <span className="w-5 h-5 rounded-full bg-info/20 text-info flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">
-                      {idx + 1}
-                    </span>
                     <span className="text-sm text-text-primary">{step}</span>
                   </div>
                 ))}
