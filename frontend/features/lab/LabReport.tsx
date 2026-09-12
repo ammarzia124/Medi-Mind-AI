@@ -1,481 +1,305 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../../contexts/LanguageContext';
-import { 
-  FlaskConical, 
-  ArrowLeft, 
-  Upload, 
-  Send,
+import {
+  FlaskConical,
+  ArrowLeft,
+  Upload,
+  FileText,
   CheckCircle,
   AlertTriangle,
-  XCircle,
-  FileText,
-  TrendingUp,
-  Info
+  Info,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   type LabAnalysis,
-  type LabResultStatus,
   severityToLabel,
   severityToEmoji,
-  severityToColorClass,
   urgencyToLabel,
-  urgencyToColorClass,
 } from '../../lib/schemas';
-import {
-  validateLabAnalysis,
-  sanitizeInput,
-} from '../../lib/validators';
 
-// ============================================================================
-// LAB DATABASE - All entries follow the validated schema structure
-// ============================================================================
-
-const labDatabase: Record<string, LabAnalysis> = {
-  hemoglobin: {
+const MOCK_REPORTS: Record<string, LabAnalysis> = {
+  cbc: {
     severity: 2,
     urgency: 'self_care',
-    summary: 'These values appear to be within typical reference ranges. However, reference ranges can vary by lab, age, and sex.',
+    overall_status: 'normal',
     results: [
-      { name: 'Hemoglobin', value: '12.5', unit: 'g/dL', status: 'within_reference_range', what_this_may_mean: 'This value falls within the typical reference range. Hemoglobin helps carry oxygen in your blood.' },
-      { name: 'Red Blood Cell Count', value: '4.7', unit: 'million/µL', status: 'within_reference_range', what_this_may_mean: 'This appears to be within the typical range, suggesting normal red blood cell production.' },
+      {
+        test_name: 'Hemoglobin',
+        result_value: '13.2',
+        result_unit: 'g/dL',
+        reference_range: '12.0-16.0',
+        status: 'normal',
+        what_is_this: 'Hemoglobin is a protein in red blood cells that carries oxygen throughout your body.',
+        what_it_means: 'Your hemoglobin level is within the normal range, suggesting your blood is carrying oxygen properly.',
+        what_to_do: 'Continue maintaining a healthy lifestyle. No specific action needed for this result.',
+      },
+      {
+        test_name: 'WBC Count',
+        result_value: '11.5',
+        result_unit: 'K/µL',
+        reference_range: '4.5-11.0',
+        status: 'high',
+        what_is_this: 'White blood cells (WBC) help your body fight infections.',
+        what_it_means: 'Your WBC is slightly elevated, which may indicate your body is fighting an infection or inflammation.',
+        what_to_do: 'Monitor for symptoms like fever, fatigue, or signs of infection. If concerned, consult your doctor.',
+      },
+      {
+        test_name: 'Platelets',
+        result_value: '245',
+        result_unit: 'K/µL',
+        reference_range: '150-400',
+        status: 'normal',
+        what_is_this: 'Platelets help your blood clot and prevent bleeding.',
+        what_it_means: 'Your platelet count is within normal range, indicating normal clotting ability.',
+        what_to_do: 'No action needed. Continue your normal activities.',
+      },
     ],
-    warning_signs: [
-      '⚠️ Significant changes from previous results',
-      '⚠️ Values far outside reference ranges',
-      '⚠️ New symptoms accompanying lab changes',
-    ],
-    recommended_action: 'Discuss these results with your doctor at your next appointment. Only a healthcare professional can interpret these in the context of your overall health.',
-    next_steps: [
-      '📋 Discuss these results with your doctor',
-      '💧 Continue maintaining a balanced diet',
-      '🏃‍♂️ Stay active and hydrated',
-      '📅 Follow your doctor\'s recommended schedule for future tests',
-    ],
-    important_note: 'Lab results should always be interpreted by a healthcare professional who knows your medical history. Reference ranges vary between laboratories.',
-    disclaimer: '⚕️ This information is for educational purposes only and is NOT a medical diagnosis. Only a qualified healthcare professional can interpret your lab results.',
+    summary: {
+      in_simple_words: [
+        'Your blood test results are generally normal.',
+        'Your white blood cell count is slightly elevated, which may indicate a mild infection.',
+        'No immediate action is needed, but monitor for any symptoms.',
+      ],
+    },
+    disclaimer: '⚕️ This information is for educational purposes only and is NOT a medical diagnosis. Always consult a healthcare professional for proper interpretation of lab results.',
+    confidence_score: 0.85,
+    language: 'en',
   },
   cholesterol: {
     severity: 3,
     urgency: 'doctor_soon',
-    summary: 'Some of these values are outside typical reference ranges. This may suggest areas that could benefit from attention, but only a healthcare professional can assess your individual risk.',
+    overall_status: 'some_abnormal',
     results: [
-      { name: 'Total Cholesterol', value: '240', unit: 'mg/dL', status: 'outside_reference_range', what_this_may_mean: 'This value is above the typical recommended level (below 200 mg/dL). Elevated cholesterol may be associated with increased cardiovascular risk over time.' },
-      { name: 'LDL (Bad Cholesterol)', value: '155', unit: 'mg/dL', status: 'outside_reference_range', what_this_may_mean: 'This is above the typical optimal level (below 100 mg/dL). Higher LDL levels may be associated with plaque buildup in arteries.' },
-      { name: 'HDL (Good Cholesterol)', value: '45', unit: 'mg/dL', status: 'within_reference_range', what_this_may_mean: 'This appears to be within the acceptable range (above 40 mg/dL). HDL may help remove other forms of cholesterol.' },
-      { name: 'Triglycerides', value: '180', unit: 'mg/dL', status: 'outside_reference_range', what_this_may_mean: 'This is above the typical range (below 150 mg/dL). Elevated triglycerides may be associated with dietary factors.' },
+      {
+        test_name: 'Total Cholesterol',
+        result_value: '240',
+        result_unit: 'mg/dL',
+        reference_range: '<200',
+        status: 'high',
+        what_is_this: 'Total cholesterol measures all the cholesterol in your blood.',
+        what_it_means: 'Your total cholesterol is elevated, which may increase cardiovascular risk over time.',
+        what_to_do: 'Schedule a follow-up with your doctor to discuss dietary changes and possible medication.',
+      },
+      {
+        test_name: 'LDL Cholesterol',
+        result_value: '155',
+        result_unit: 'mg/dL',
+        reference_range: '<100',
+        status: 'high',
+        what_is_this: 'LDL is often called "bad" cholesterol because high levels can lead to plaque buildup in arteries.',
+        what_it_means: 'Your LDL is significantly elevated, which is a concern for heart health.',
+        what_to_do: 'Consult your doctor about lifestyle changes and whether medication is appropriate.',
+      },
+      {
+        test_name: 'HDL Cholesterol',
+        result_value: '45',
+        result_unit: 'mg/dL',
+        reference_range: '>40',
+        status: 'normal',
+        what_is_this: 'HDL is often called "good" cholesterol because it helps remove other forms of cholesterol.',
+        what_it_means: 'Your HDL is within acceptable range, providing some protective benefit.',
+        what_to_do: 'Continue healthy habits. Regular exercise can help maintain or improve HDL levels.',
+      },
     ],
-    warning_signs: [
-      '⚠️ Multiple values outside reference ranges',
-      '⚠️ Family history of heart disease',
-      '⚠️ Other cardiovascular risk factors present',
-    ],
-    recommended_action: 'Schedule a follow-up with your doctor to discuss these results. They can assess your individual risk and recommend appropriate steps.',
-    next_steps: [
-      '👨‍⚕️ Schedule a follow-up with your doctor',
-      '🥗 Consider discussing dietary modifications',
-      '🚶‍♂️ Ask your doctor about appropriate physical activity',
-      '🔄 Your doctor may recommend retesting in 3-6 months',
-      '💊 Do NOT start any medication without consulting your doctor',
-    ],
-    important_note: 'Cholesterol levels are just one piece of your overall health picture. Many factors affect cardiovascular health, and treatment decisions should be made with your doctor.',
-    disclaimer: '⚕️ This information is for educational purposes only and is NOT a medical diagnosis. Only a qualified healthcare professional can interpret your lab results.',
-  },
-  blood_sugar: {
-    severity: 4,
-    urgency: 'doctor_soon',
-    summary: 'These values are above typical reference ranges and may warrant further evaluation. However, blood sugar levels can be affected by many factors.',
-    results: [
-      { name: 'Fasting Blood Sugar', value: '135', unit: 'mg/dL', status: 'outside_reference_range', what_this_may_mean: 'This value is above the typical normal range (70-100 mg/dL). Values in this range may sometimes be associated with pre-diabetes or diabetes, but a single test is not diagnostic.' },
-      { name: 'HbA1c', value: '6.2', unit: '%', status: 'outside_reference_range', what_this_may_mean: 'This reflects average blood sugar over approximately 3 months. According to some guidelines, this range may be associated with pre-diabetes, but confirmation requires medical evaluation.' },
-    ],
-    warning_signs: [
-      '⚠️ Values significantly above reference ranges',
-      '⚠️ Increased thirst or urination',
-      '⚠️ Unexplained weight changes',
-      '⚠️ Blurred vision or fatigue',
-    ],
-    recommended_action: 'See your doctor promptly for a comprehensive evaluation. They can determine if additional testing is needed.',
-    next_steps: [
-      '👨‍⚕️ See your doctor promptly for evaluation',
-      '🍎 Discuss dietary considerations with your doctor',
-      '🏃‍♂️ Ask about appropriate physical activity',
-      '📊 Your doctor may recommend additional testing',
-      '📝 Keep a log of your symptoms',
-    ],
-    important_note: 'Blood sugar levels can fluctuate due to many factors. These results should be evaluated by a healthcare professional who can consider your complete medical picture.',
-    disclaimer: '⚕️ This information is for educational purposes only and is NOT a medical diagnosis. Only a qualified healthcare professional can interpret your lab results.',
-  },
-  vitamin_d: {
-    severity: 2,
-    urgency: 'doctor_soon',
-    summary: 'This value is below the typical reference range. Low Vitamin D is very common and usually easily addressed.',
-    results: [
-      { name: 'Vitamin D (25-OH)', value: '18', unit: 'ng/mL', status: 'outside_reference_range', what_this_may_mean: 'This value is below the typical reference range (30-100 ng/mL). Low Vitamin D is very common and may be associated with various health factors.' },
-    ],
-    warning_signs: [
-      '⚠️ Bone pain or muscle weakness',
-      '⚠️ Frequent infections',
-      '⚠️ Fatigue or mood changes',
-    ],
-    recommended_action: 'Discuss supplementation with your doctor. This is very common and usually easily managed.',
-    next_steps: [
-      '👨‍⚕️ Discuss supplementation with your doctor',
-      '☀️ Ask your doctor about safe sun exposure',
-      '🐟 Consider Vitamin D-rich foods',
-      '🔄 Your doctor may recommend rechecking levels in 3 months',
-      'ℹ️ This is very common and usually easily managed',
-    ],
-    important_note: 'Vitamin D needs vary by individual. Your doctor can recommend the appropriate approach based on your specific situation.',
-    disclaimer: '⚕️ This information is for educational purposes only and is NOT a medical diagnosis. Only a qualified healthcare professional can interpret your lab results.',
-  },
-  thyroid: {
-    severity: 3,
-    urgency: 'doctor_soon',
-    summary: 'These results may suggest thyroid function that is outside typical ranges. Thyroid conditions are common and usually manageable.',
-    results: [
-      { name: 'TSH', value: '6.5', unit: 'mIU/L', status: 'outside_reference_range', what_this_may_mean: 'This value is above the typical reference range (0.4-4.0 mIU/L). Elevated TSH may sometimes be associated with an underactive thyroid.' },
-      { name: 'Free T4', value: '0.7', unit: 'ng/dL', status: 'outside_reference_range', what_this_may_mean: 'This is slightly below the typical range (0.8-1.8 ng/dL), which may sometimes support the possibility of hypothyroidism.' },
-    ],
-    warning_signs: [
-      '⚠️ Unexplained weight changes',
-      '⚠️ Fatigue or sensitivity to cold',
-      '⚠️ Dry skin or hair changes',
-      '⚠️ Mood changes or depression',
-    ],
-    recommended_action: 'See your doctor to discuss these results. Thyroid conditions are common and usually treatable.',
-    next_steps: [
-      '👨‍⚕️ See your doctor to discuss these results',
-      '💊 If hypothyroidism is confirmed, treatment is typically straightforward',
-      '⏰ Medication (if prescribed) is usually taken on an empty stomach',
-      '🔄 Thyroid levels are typically rechecked 6-8 weeks after starting treatment',
-      'ℹ️ Many people manage thyroid conditions successfully',
-    ],
-    important_note: 'Thyroid function is complex and can be influenced by many factors. These results should be evaluated by a healthcare professional.',
-    disclaimer: '⚕️ This information is for educational purposes only and is NOT a medical diagnosis. Only a qualified healthcare professional can interpret your lab results.',
+    summary: {
+      in_simple_words: [
+        'Your cholesterol levels show some areas of concern.',
+        'LDL (bad cholesterol) is elevated, which may affect heart health.',
+        'A doctor visit is recommended to discuss these results.',
+      ],
+    },
+    disclaimer: '⚕️ This information is for educational purposes only and is NOT a medical diagnosis. Always consult a healthcare professional for proper interpretation of lab results.',
+    confidence_score: 0.9,
+    language: 'en',
   },
 };
 
-const DEFAULT_LAB_ANALYSIS: LabAnalysis = {
-  severity: 3,
-  urgency: 'doctor_soon',
-  summary: 'Based on the information provided, these results appear generally within typical ranges. However, for a complete interpretation, specific values from your full report would be needed.',
-  results: [
-    { name: 'Test Result', value: '—', unit: '', status: 'within_reference_range', what_this_may_mean: 'Based on the information provided, this appears to be within acceptable ranges. However, complete interpretation requires the full lab report.' },
-  ],
-  warning_signs: [
-    '⚠️ Any result marked as abnormal should be discussed with your doctor',
-    '⚠️ Lab results should never be interpreted in isolation',
-    '⚠️ Reference ranges vary between laboratories',
-  ],
-  recommended_action: 'Discuss these results with your doctor at your next visit. They can provide proper interpretation in the context of your overall health.',
-  next_steps: [
-    '📋 Share specific values from your full report for more detailed insights',
-    '👨‍⚕️ Discuss these results with your doctor',
-    '📁 Keep a copy of your results for your records',
-    '📅 Continue with regular health check-ups',
-  ],
-  important_note: 'Lab results should always be interpreted by a healthcare professional who knows your medical history and can consider all relevant factors.',
-  disclaimer: '⚕️ This information is for educational purposes only and is NOT a medical diagnosis. Only a qualified healthcare professional can interpret your lab results.',
-};
+const REPORT_OPTIONS = [
+  { key: 'cbc', label: 'CBC Report', labelUr: 'CBC رپورٹ', emoji: '🩸' },
+  { key: 'cholesterol', label: 'Cholesterol Panel', labelUr: 'کولیسٹرول پینل', emoji: '🫀' },
+];
 
-// ============================================================================
-// ANALYSIS FUNCTION - Returns validated output
-// ============================================================================
+export default function LabReport() {
+  const { language } = useLanguage();
+  const navigate = useNavigate();
+  const [selectedReport, setSelectedReport] = useState<string | null>(null);
+  const [showResults, setShowResults] = useState(false);
 
-function analyzeLabReport(input: string): LabAnalysis {
-  const lower = input.toLowerCase();
-  
-  let rawResult: LabAnalysis;
-  
-  if (lower.includes('hemoglobin') || lower.includes('cbc') || lower.includes('blood count') || lower.includes('rbc')) {
-    rawResult = labDatabase.hemoglobin;
-  } else if (lower.includes('cholesterol') || lower.includes('lipid') || lower.includes('ldl') || lower.includes('hdl')) {
-    rawResult = labDatabase.cholesterol;
-  } else if (lower.includes('sugar') || lower.includes('glucose') || lower.includes('diabetes') || lower.includes('hba1c')) {
-    rawResult = labDatabase.blood_sugar;
-  } else if (lower.includes('vitamin d') || lower.includes('vit d')) {
-    rawResult = labDatabase.vitamin_d;
-  } else if (lower.includes('thyroid') || lower.includes('tsh') || lower.includes('t4')) {
-    rawResult = labDatabase.thyroid;
-  } else {
-    rawResult = DEFAULT_LAB_ANALYSIS;
-  }
-  
-  // CRITICAL: Validate the output through Zod before returning
-  return validateLabAnalysis(rawResult);
-}
+  const result = selectedReport ? MOCK_REPORTS[selectedReport] : null;
 
-// ============================================================================
-// COMPONENT
-// ============================================================================
-
-export function LabReport() {
-  const { t } = useLanguage();
-  const [input, setInput] = useState('');
-  const [analysis, setAnalysis] = useState<LabAnalysis | null>(null);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-
-  const handleAnalyze = () => {
-    if (!input.trim()) return;
-    setIsAnalyzing(true);
-    
-    // Sanitize input before processing
-    const sanitizedInput = sanitizeInput(input);
-    
-    setTimeout(() => {
-      const result = analyzeLabReport(sanitizedInput);
-      // The analysis is already validated by analyzeLabReport
-      setAnalysis(result);
-      setIsAnalyzing(false);
-    }, 1800);
+  const handleSelect = (key: string) => {
+    setSelectedReport(key);
+    setShowResults(false);
+    setTimeout(() => setShowResults(true), 100);
   };
-
-  const getStatusStyle = (status: LabResultStatus) => {
-    switch (status) {
-      case 'within_reference_range': 
-        return { bg: 'bg-success/10', text: 'text-success', icon: CheckCircle, label: t('normal') };
-      case 'outside_reference_range': 
-        return { bg: 'bg-warning/10', text: 'text-warning', icon: AlertTriangle, label: t('abnormal') };
-      case 'significantly_outside_range': 
-        return { bg: 'bg-critical/10', text: 'text-critical', icon: XCircle, label: t('critical') };
-      default: 
-        return { bg: 'bg-border', text: 'text-text-secondary', icon: CheckCircle, label: '' };
-    }
-  };
-
-  const quickTests = [
-    'Hemoglobin / CBC',
-    'Cholesterol Panel',
-    'Blood Sugar / HbA1c',
-    'Vitamin D',
-    'Thyroid (TSH)',
-  ];
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <button 
-          onClick={() => { setAnalysis(null); setInput(''); }}
-          className="p-2 rounded-xl hover:bg-primary-50 text-text-secondary"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </button>
-        <div>
-          <h1 className="text-2xl font-bold text-text-primary">{t('labTitle')}</h1>
-          <p className="text-sm text-text-secondary">{t('labSubtitle')}</p>
+    <div className="min-h-screen bg-[#F8FFFE]">
+      {/* Top bar */}
+      <div className="bg-white border-b border-[#CCFBF1] px-4 py-3">
+        <div className="max-w-2xl mx-auto flex items-center gap-3">
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="p-2 rounded-xl hover:bg-gray-100 transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5 text-gray-600" />
+          </button>
+          <div>
+            <h1 className="text-lg font-bold text-[#134E4A]">
+              {language === 'en' ? '🧪 Lab Reports' : '🧪 لیب رپورٹس'}
+            </h1>
+            <p className="text-xs text-gray-500">
+              {language === 'en' ? 'Understand your lab results' : 'اپنے لیب کے نتائج سمجھیں'}
+            </p>
+          </div>
         </div>
       </div>
 
-      {/* Input Section */}
-      {!analysis && (
-        <motion.div 
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="space-y-4"
-        >
-          {/* Upload Area */}
-          <div className="bg-surface border-2 border-dashed border-border rounded-2xl p-8 text-center hover:border-primary-light transition-colors cursor-pointer">
-            <div className="w-14 h-14 rounded-2xl bg-primary-50 flex items-center justify-center mx-auto mb-4">
-              <Upload className="w-7 h-7 text-primary" />
-            </div>
-            <p className="font-medium text-text-primary mb-1">{t('uploadReport')}</p>
-            <p className="text-sm text-text-secondary">{t('orDescribe')}</p>
+      <div className="max-w-2xl mx-auto px-4 py-6 space-y-5">
+        {/* Upload area */}
+        <div className="bg-white border-2 border-dashed border-[#CCFBF1] rounded-2xl p-8 text-center">
+          <div className="w-16 h-16 bg-[#F0FDFA] rounded-full flex items-center justify-center mx-auto mb-4">
+            <Upload className="w-8 h-8 text-[#0D9488]" />
           </div>
+          <h3 className="text-lg font-semibold text-[#134E4A] mb-2">
+            {language === 'en' ? 'Upload Lab Report' : 'لیب رپورٹ اپلوڈ کریں'}
+          </h3>
+          <p className="text-sm text-gray-500 mb-4">
+            {language === 'en'
+              ? 'Upload a photo or PDF of your lab report for AI analysis'
+              : 'AI تجزیے کے لیے اپنی لیب رپورٹ کی تصویر یا PDF اپلوڈ کریں'}
+          </p>
+          <button className="px-6 py-3 rounded-xl bg-[#0D9488] text-white font-semibold hover:bg-[#0F766E] transition-all">
+            <div className="flex items-center gap-2">
+              <Upload className="w-5 h-5" />
+              {language === 'en' ? 'Choose File' : 'فائل منتخب کریں'}
+            </div>
+          </button>
+        </div>
 
-          {/* Text Input */}
-          <div className="bg-surface border border-border rounded-2xl p-6">
-            <textarea
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder={t('labPlaceholder')}
-              className="w-full min-h-[120px] p-4 rounded-xl border border-border bg-background text-text-primary placeholder:text-text-secondary/60 resize-none focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary-light transition-all"
-            />
-            
-            <div className="flex flex-wrap gap-2 mt-4">
-              {quickTests.map((test, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setInput(test)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary-50 text-primary text-xs font-medium hover:bg-primary-100 transition-colors"
-                >
-                  <FileText className="w-3 h-3" />
-                  {test}
-                </button>
+        {/* Or select a demo */}
+        <div className="text-center">
+          <p className="text-sm text-gray-400 mb-3">
+            {language === 'en' ? '— or try a demo report —' : '— یا ڈیمو رپورٹ آزمائیں —'}
+          </p>
+          <div className="flex gap-3 justify-center">
+            {REPORT_OPTIONS.map((opt) => (
+              <button
+                key={opt.key}
+                onClick={() => handleSelect(opt.key)}
+                className={`flex items-center gap-2 px-5 py-3 rounded-xl border-2 font-medium transition-all ${
+                  selectedReport === opt.key
+                    ? 'border-[#0D9488] bg-[#0D9488]/10 text-[#0D9488]'
+                    : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                }`}
+              >
+                <span className="text-xl">{opt.emoji}</span>
+                {language === 'en' ? opt.label : opt.labelUr}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Results */}
+        <AnimatePresence>
+          {showResults && result && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="space-y-4"
+            >
+              {/* Urgency banner */}
+              <div className={`rounded-2xl p-5 border ${
+                result.urgency === 'emergency' ? 'bg-[#EF4444]/10 border-[#EF4444]/30 text-[#EF4444]' :
+                result.urgency === 'urgent' ? 'bg-[#F59E0B]/10 border-[#F59E0B]/30 text-[#F59E0B]' :
+                result.urgency === 'doctor_soon' ? 'bg-[#3B82F6]/10 border-[#3B82F6]/30 text-[#3B82F6]' :
+                'bg-[#22C55E]/10 border-[#22C55E]/30 text-[#22C55E]'
+              }`}>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-white/50 flex items-center justify-center">
+                    {result.urgency === 'emergency' || result.urgency === 'urgent' ? (
+                      <AlertTriangle className="w-5 h-5" />
+                    ) : (
+                      <CheckCircle className="w-5 h-5" />
+                    )}
+                  </div>
+                  <div>
+                    <p className="font-semibold text-sm">{urgencyToLabel(result.urgency)}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Severity */}
+              <div className="bg-white border border-[#CCFBF1] rounded-2xl p-5 shadow-sm">
+                <h3 className="text-sm font-medium text-gray-500 mb-3">
+                  {language === 'en' ? 'Severity' : 'شدت'}
+                </h3>
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#F0FDFA]">
+                  <span className="text-lg">{severityToEmoji(result.severity)}</span>
+                  <span className="font-semibold text-sm text-[#134E4A]">
+                    {severityToLabel(result.severity)} ({result.severity}/5)
+                  </span>
+                </div>
+              </div>
+
+              {/* Summary */}
+              <div className="bg-white border border-[#CCFBF1] rounded-2xl p-5 shadow-sm">
+                <h3 className="text-sm font-medium text-gray-500 mb-3">
+                  {language === 'en' ? 'Summary' : 'خلاصہ'}
+                </h3>
+                <div className="space-y-2">
+                  {result.summary.in_simple_words.map((line, i) => (
+                    <p key={i} className="text-sm text-[#134E4A] leading-relaxed">• {line}</p>
+                  ))}
+                </div>
+              </div>
+
+              {/* Individual results */}
+              {result.results.map((item, idx) => (
+                <div key={idx} className="bg-white border border-[#CCFBF1] rounded-2xl p-5 shadow-sm">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="font-semibold text-[#134E4A]">{item.test_name}</h4>
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      item.status === 'normal' ? 'bg-[#22C55E]/10 text-[#22C55E]' :
+                      item.status === 'high' ? 'bg-[#EF4444]/10 text-[#EF4444]' :
+                      item.status === 'low' ? 'bg-[#F59E0B]/10 text-[#F59E0B]' :
+                      'bg-gray-100 text-gray-500'
+                    }`}>
+                      {item.status}
+                    </span>
+                  </div>
+                  <div className="flex items-baseline gap-2 mb-3">
+                    <span className="text-2xl font-bold text-[#134E4A]">{item.result_value}</span>
+                    <span className="text-sm text-gray-500">{item.result_unit}</span>
+                    {item.reference_range && (
+                      <span className="text-xs text-gray-400 ml-auto">Ref: {item.reference_range}</span>
+                    )}
+                  </div>
+                  <p className="text-sm text-gray-600 leading-relaxed">{item.what_it_means}</p>
+                </div>
               ))}
-            </div>
 
-            <button
-              onClick={handleAnalyze}
-              disabled={!input.trim() || isAnalyzing}
-              className="mt-4 w-full flex items-center justify-center gap-2 bg-primary text-white px-6 py-3.5 rounded-xl font-semibold hover:bg-primary-dark transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isAnalyzing ? (
-                <>
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  {t('analyzing')}
-                </>
-              ) : (
-                <>
-                  <Send className="w-4 h-4" />
-                  {t('analyzeBtn')}
-                </>
-              )}
-            </button>
-          </div>
-        </motion.div>
-      )}
-
-      {/* Results - Only rendered if validation passed */}
-      <AnimatePresence>
-        {analysis && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="space-y-4"
-          >
-            {/* Urgency Banner */}
-            <div className={`border rounded-2xl p-5 ${urgencyToColorClass(analysis.urgency)}`}>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-white/50 flex items-center justify-center">
-                  {analysis.urgency === 'emergency' ? (
-                    <AlertTriangle className="w-5 h-5" />
-                  ) : analysis.urgency === 'urgent' ? (
-                    <AlertTriangle className="w-5 h-5" />
-                  ) : (
-                    <Info className="w-5 h-5" />
-                  )}
-                </div>
-                <div>
-                  <p className="font-semibold text-sm">
-                    {urgencyToLabel(analysis.urgency)}
-                  </p>
-                  <p className="text-xs opacity-80 mt-0.5">
-                    {analysis.recommended_action}
-                  </p>
+              {/* Disclaimer */}
+              <div className="bg-[#F8FFFE] border border-[#CCFBF1] rounded-xl p-4">
+                <div className="flex items-start gap-2">
+                  <Info className="w-4 h-4 text-gray-500 flex-shrink-0 mt-0.5" />
+                  <p className="text-xs text-gray-500 leading-relaxed">{result.disclaimer}</p>
                 </div>
               </div>
-            </div>
 
-            {/* Severity */}
-            <div className="bg-surface border border-border rounded-2xl p-5">
-              <h3 className="text-sm font-medium text-text-secondary mb-3">{t('severityLevel')}</h3>
-              <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full ${severityToColorClass(analysis.severity)}`}>
-                <span className="text-lg">{severityToEmoji(analysis.severity)}</span>
-                <span className="font-semibold text-sm">
-                  {severityToLabel(analysis.severity)} ({analysis.severity}/5)
-                </span>
-              </div>
-            </div>
-
-            {/* Important Note Banner */}
-            <div className="bg-info/5 border border-info/20 rounded-2xl p-5">
-              <div className="flex items-start gap-3">
-                <Info className="w-5 h-5 text-info flex-shrink-0 mt-0.5" />
-                <div>
-                  <h3 className="text-sm font-semibold text-info mb-1">Important Note</h3>
-                  <p className="text-sm text-text-primary leading-relaxed">{analysis.important_note}</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Summary */}
-            <div className="bg-surface border border-border rounded-2xl p-5">
-              <h3 className="text-sm font-medium text-text-secondary mb-3">{t('whatThisMaySuggestLab')}</h3>
-              <p className="text-sm text-text-primary leading-relaxed">{analysis.summary}</p>
-            </div>
-
-            {/* Individual Results */}
-            <div className="bg-surface border border-border rounded-2xl p-5">
-              <h3 className="text-sm font-medium text-text-secondary mb-4">{t('results')}</h3>
-              <div className="space-y-3">
-                {analysis.results.map((result, idx) => {
-                  const status = getStatusStyle(result.status);
-                  const StatusIcon = status.icon;
-                  return (
-                    <motion.div
-                      key={idx}
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: idx * 0.1 }}
-                      className={`p-4 rounded-xl border ${
-                        result.status === 'within_reference_range' ? 'border-success/20 bg-success/5' :
-                        result.status === 'outside_reference_range' ? 'border-warning/20 bg-warning/5' :
-                        'border-critical/20 bg-critical/5'
-                      }`}
-                    >
-                      <div className="flex items-start justify-between mb-2">
-                        <div>
-                          <p className="font-semibold text-text-primary text-sm">{result.name}</p>
-                          <p className="text-lg font-bold text-text-primary">
-                            {result.value} <span className="text-xs font-normal text-text-secondary">{result.unit}</span>
-                          </p>
-                        </div>
-                        <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full ${status.bg}`}>
-                          <StatusIcon className={`w-3.5 h-3.5 ${status.text}`} />
-                          <span className={`text-xs font-semibold ${status.text}`}>{status.label}</span>
-                        </div>
-                      </div>
-                      <p className="text-xs text-text-secondary leading-relaxed mt-2">
-                        <span className="font-medium">What this may mean: </span>
-                        {result.what_this_may_mean}
-                      </p>
-                    </motion.div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Warning Signs */}
-            <div className="bg-warning/5 border border-warning/20 rounded-2xl p-5">
-              <h3 className="text-sm font-medium text-warning mb-3 flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4" />
-                {t('warningSigns')}
-              </h3>
-              <div className="space-y-2">
-                {analysis.warning_signs.map((sign, idx) => (
-                  <div key={idx} className="flex items-start gap-3 p-2">
-                    <span className="text-sm text-text-primary leading-relaxed">{sign}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Next Steps */}
-            <div className="bg-info/5 border border-info/20 rounded-2xl p-5">
-              <h3 className="text-sm font-medium text-info mb-3 flex items-center gap-2">
-                <TrendingUp className="w-4 h-4" />
-                {t('nextSteps')}
-              </h3>
-              <div className="space-y-2">
-                {analysis.next_steps.map((step, idx) => (
-                  <div key={idx} className="flex items-start gap-3 p-2">
-                    <span className="text-sm text-text-primary">{step}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Disclaimer */}
-            <div className="bg-background border border-border rounded-xl p-4">
-              <div className="flex items-start gap-2">
-                <Info className="w-4 h-4 text-text-secondary flex-shrink-0 mt-0.5" />
-                <p className="text-xs text-text-secondary leading-relaxed">{analysis.disclaimer}</p>
-              </div>
-            </div>
-
-            {/* Try Again */}
-            <button
-              onClick={() => { setAnalysis(null); setInput(''); }}
-              className="w-full py-3 rounded-xl border border-border text-text-secondary font-medium hover:bg-background transition-all"
-            >
-              {t('back')}
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
+              {/* Reset */}
+              <button
+                onClick={() => { setSelectedReport(null); setShowResults(false); }}
+                className="w-full py-3 rounded-xl border border-gray-200 text-gray-500 font-medium hover:bg-gray-50 transition-all"
+              >
+                {language === 'en' ? 'View another report' : 'دیکھیں دیگر رپورٹ'}
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   );
 }

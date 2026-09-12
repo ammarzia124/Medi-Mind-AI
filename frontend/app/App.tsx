@@ -1,18 +1,16 @@
 import React, { Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ThemeProvider, CssBaseline, CircularProgress, Box } from '@mui/material';
-import { LanguageProvider, useLanguage } from '../contexts/LanguageContext';
-import { theme, rtlTheme } from '../theme/theme';
-import ErrorBoundary from '../components/ErrorBoundary';
+import { LanguageProvider } from '../contexts/LanguageContext';
 
 // Lazy load pages for better performance
 const LandingPage = React.lazy(() => import('../features/landing/LandingPage'));
+const AuthPage = React.lazy(() => import('../features/auth/AuthPage'));
 const Dashboard = React.lazy(() => import('../features/dashboard/Dashboard'));
-const SymptomTriage = React.lazy(() => import('../features/symptoms/SymptomTriage'));
-const LabReportReader = React.lazy(() => import('../features/lab/LabReportReader'));
+const SymptomChecker = React.lazy(() => import('../features/symptoms/SymptomChecker').then(m => ({ default: m.SymptomChecker })));
+const LabReport = React.lazy(() => import('../features/lab/LabReport'));
 const MedicationSafety = React.lazy(() => import('../features/medications/MedicationSafety'));
-const HealthTimeline = React.lazy(() => import('../features/timeline/HealthTimeline'));
+const Timeline = React.lazy(() => import('../features/timeline/Timeline').then(m => ({ default: m.Timeline })));
 
 // Create QueryClient
 const queryClient = new QueryClient({
@@ -24,30 +22,15 @@ const queryClient = new QueryClient({
   },
 });
 
-// Loading fallback component
+// Loading fallback component (Tailwind)
 const LoadingFallback = () => (
-  <Box 
-    sx={{ 
-      display: 'flex', 
-      justifyContent: 'center', 
-      alignItems: 'center', 
-      minHeight: '100vh' 
-    }}
-  >
-    <CircularProgress />
-  </Box>
+  <div className="flex justify-center items-center min-h-screen bg-background">
+    <div className="flex flex-col items-center gap-3">
+      <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+      <p className="text-sm text-text-light">Loading...</p>
+    </div>
+  </div>
 );
-
-// Theme wrapper that switches based on language
-const ThemeWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { isRTL } = useLanguage();
-  return (
-    <ThemeProvider theme={isRTL ? rtlTheme : theme}>
-      <CssBaseline />
-      {children}
-    </ThemeProvider>
-  );
-};
 
 // App content with routing
 const AppContent: React.FC = () => {
@@ -56,11 +39,12 @@ const AppContent: React.FC = () => {
       <Suspense fallback={<LoadingFallback />}>
         <Routes>
           <Route path="/" element={<LandingPage />} />
+          <Route path="/auth" element={<AuthPage />} />
           <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/symptoms" element={<SymptomTriage />} />
-          <Route path="/lab" element={<LabReportReader />} />
+          <Route path="/symptoms" element={<SymptomChecker />} />
+          <Route path="/lab" element={<LabReport />} />
           <Route path="/medications" element={<MedicationSafety />} />
-          <Route path="/timeline" element={<HealthTimeline />} />
+          <Route path="/timeline" element={<Timeline />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>
@@ -71,15 +55,11 @@ const AppContent: React.FC = () => {
 // Main App component
 const App: React.FC = () => {
   return (
-    <ErrorBoundary>
-      <QueryClientProvider client={queryClient}>
-        <LanguageProvider>
-          <ThemeWrapper>
-            <AppContent />
-          </ThemeWrapper>
-        </LanguageProvider>
-      </QueryClientProvider>
-    </ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <LanguageProvider>
+        <AppContent />
+      </LanguageProvider>
+    </QueryClientProvider>
   );
 };
 

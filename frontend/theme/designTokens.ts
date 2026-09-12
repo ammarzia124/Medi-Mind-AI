@@ -2,107 +2,111 @@
  * MediMind AI Design Tokens
  * 
  * Single source of truth for all design values
- * Used by both MUI theme and Tailwind CSS
+ * Used by Tailwind CSS and component styles
  */
 
 export const colors = {
   // Primary palette
   primary: {
-    main: '#176B67',
-    light: '#4FA7A1',
-    dark: '#0F4A47',
+    main: '#0D9488',
+    light: '#2DD4BF',
+    dark: '#0F766E',
     contrastText: '#FFFFFF',
-    50: '#E8F5F4',
-    100: '#C5E8E6',
-    200: '#8DD1CD',
-    300: '#5BBAB5',
-    400: '#3AA8A3',
-    500: '#176B67',
-    600: '#135C59',
-    700: '#0F4A47',
-    800: '#0B3835',
-    900: '#072624',
+    50: '#F0FDFA',
+    100: '#CCFBF1',
+    200: '#99F6E4',
+    300: '#5EEAD4',
+    400: '#2DD4BF',
+    500: '#0D9488',
+    600: '#0D9488',
+    700: '#0F766E',
+    800: '#115E59',
+    900: '#134E4A',
   },
+  
+  // Accent
+  accent: '#F0FDF4',
   
   // Secondary palette
   secondary: {
-    main: '#4FA7A1',
-    light: '#7FC4BF',
-    dark: '#2F8A84',
+    main: '#2DD4BF',
+    light: '#5EEAD4',
+    dark: '#0D9488',
     contrastText: '#FFFFFF',
   },
   
   // Background colors
   background: {
-    default: '#F7F9F8',
+    default: '#F8FFFE',
     paper: '#FFFFFF',
-    subtle: '#F0F4F3',
+    subtle: '#F0FDFA',
   },
   
   // Text colors
   text: {
-    primary: '#18302F',
-    secondary: '#60706F',
-    disabled: '#9CA8A7',
-    hint: '#60706F',
+    primary: '#134E4A',
+    secondary: '#374151',
+    light: '#6B7280',
+    disabled: '#9CA3AF',
+    hint: '#6B7280',
   },
   
   // Status colors
   success: {
-    main: '#3D8B67',
-    light: '#5FA882',
-    dark: '#2A6B4E',
+    main: '#22C55E',
+    light: '#4ADE80',
+    dark: '#16A34A',
     contrastText: '#FFFFFF',
   },
   
   warning: {
-    main: '#C58B32',
-    light: '#D9A65C',
-    dark: '#A06F24',
+    main: '#F59E0B',
+    light: '#FBBF24',
+    dark: '#D97706',
     contrastText: '#FFFFFF',
   },
   
   error: {
-    main: '#C95757',
-    light: '#E07A7A',
-    dark: '#A84040',
+    main: '#EF4444',
+    light: '#F87171',
+    dark: '#DC2626',
     contrastText: '#FFFFFF',
   },
   
   info: {
-    main: '#4F7FA3',
-    light: '#7A9FBF',
-    dark: '#3A6382',
+    main: '#3B82F6',
+    light: '#60A5FA',
+    dark: '#2563EB',
     contrastText: '#FFFFFF',
   },
   
   // Neutral colors
   grey: {
-    50: '#F7F9F8',
-    100: '#F0F4F3',
-    200: '#E4EBEA',
-    300: '#D1DBDA',
-    400: '#B8C5C4',
-    500: '#9CA8A7',
-    600: '#7A8887',
-    700: '#60706F',
-    800: '#4A5857',
-    900: '#18302F',
+    50: '#F9FAFB',
+    100: '#F3F4F6',
+    200: '#E5E7EB',
+    300: '#D1D5DB',
+    400: '#9CA3AF',
+    500: '#6B7280',
+    600: '#4B5563',
+    700: '#374151',
+    800: '#1F2937',
+    900: '#111827',
   },
   
   // Border colors
   border: {
-    main: '#DDE7E5',
-    light: '#E8EFED',
-    dark: '#C5D1CF',
+    main: '#CCFBF1',
+    light: '#E6FEF7',
+    dark: '#99F6E4',
   },
   
   // Severity colors
   severity: {
-    low: '#3D8B67',
-    moderate: '#C58B32',
-    high: '#C95757',
-    critical: '#A84040',
+    low: '#22C55E',
+    moderate: '#F59E0B',
+    high: '#EF4444',
+    critical: '#DC2626',
   },
 } as const;
 

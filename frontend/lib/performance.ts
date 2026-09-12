@@ -18,6 +18,11 @@ interface CacheEntry<T> {
  */
 export class MemoryCache<T> {
   private cache = new Map<string, CacheEntry<T>>();
+  private defaultTtl: number;
+
+  constructor(defaultTtlMs: number = 5 * 60 * 1000) {
+    this.defaultTtl = defaultTtlMs;
+  }
 
   set(key: string, data: T, ttlMs: number = 5 * 60 * 1000): void {
     this.cache.set(key, {

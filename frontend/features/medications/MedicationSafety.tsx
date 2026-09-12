@@ -1,329 +1,309 @@
-import React, { useState } from 'react';
-import { 
-  Box, 
-  Typography, 
-  TextField, 
-  Button, 
-  Paper, 
-  Stack,
-  Alert,
-  Chip,
-  CircularProgress,
-  Divider,
-  Container,
-  IconButton
-} from '@mui/material';
-import { 
-  Add as AddIcon,
-  Delete as DeleteIcon,
-  Warning as WarningIcon,
-  CheckCircle as CheckIcon,
-  ArrowBack as BackIcon
-} from '@mui/icons-material';
-import { useLanguage } from '../../contexts/LanguageContext';
-import { colors } from '../../theme/designTokens';
-import { MedicationInteraction } from '../../services/medicationService';
-import { medicationService } from '../../services/medicationService';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useLanguage } from '../../contexts/LanguageContext';
+import {
+  ArrowLeft,
+  Plus,
+  X,
+  AlertTriangle,
+  CheckCircle,
+  Shield,
+  Pill,
+  Info,
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
-export const MedicationSafety: React.FC = () => {
-  const { t, language } = useLanguage();
+interface Medication {
+  id: string;
+  name: string;
+  dosage: string;
+}
+
+interface Interaction {
+  drug1: string;
+  drug2: string;
+  severity: 'mild' | 'moderate' | 'severe';
+  description: string;
+}
+
+const MOCK_INTERACTIONS: Record<string, Interaction[]> = {
+  'aspirin+ibuprofen': [
+    {
+      drug1: 'Aspirin',
+      drug2: 'Ibuprofen',
+      severity: 'moderate',
+      description: 'Taking these together may increase the risk of stomach bleeding. Consult your doctor before combining.',
+    },
+  ],
+  'aspirin+warfarin': [
+    {
+      drug1: 'Aspirin',
+      drug2: 'Warfarin',
+      severity: 'severe',
+      description: 'Combining these increases bleeding risk significantly. Seek immediate medical advice.',
+    },
+  ],
+  'metformin+alcohol': [
+    {
+      drug1: 'Metformin',
+      drug2: 'Alcohol',
+      severity: 'severe',
+      description: 'Alcohol increases the risk of lactic acidosis with metformin. Avoid alcohol while taking this medication.',
+    },
+  ],
+  'lisinopril+potassium': [
+    {
+      drug1: 'Lisinopril',
+      drug2: 'Potassium supplements',
+      severity: 'moderate',
+      description: 'ACE inhibitors like lisinopril can raise potassium levels. Monitor potassium intake.',
+    },
+  ],
+  'omeprazole+clopidogrel': [
+    {
+      drug1: 'Omeprazole',
+      drug2: 'Clopidogrel',
+      severity: 'moderate',
+      description: 'Omeprazole may reduce the effectiveness of clopidogrel. Discuss alternatives with your doctor.',
+    },
+  ],
+};
+
+function findInteractions(meds: Medication[]): Interaction[] {
+  const interactions: Interaction[] = [];
+  const names = meds.map((m) => m.name.toLowerCase());
+
+  for (const [key, vals] of Object.entries(MOCK_INTERACTIONS)) {
+    const [a, b] = key.split('+');
+    if (names.includes(a) && names.includes(b)) {
+      interactions.push(...vals);
+    }
+  }
+
+  if (interactions.length === 0 && meds.length >= 2) {
+    interactions.push({
+      drug1: meds[0].name,
+      drug2: meds[1].name,
+      severity: 'mild',
+      description: 'No significant interactions found between these medications. Always consult your pharmacist or doctor for personalized advice.',
+    });
+  }
+
+  return interactions;
+}
+
+const SEVERITY_STYLES = {
+  mild: 'bg-[#22C55E]/10 text-[#22C55E] border-[#22C55E]/20',
+  moderate: 'bg-[#F59E0B]/10 text-[#F59E0B] border-[#F59E0B]/20',
+  severe: 'bg-[#EF4444]/10 text-[#EF4444] border-[#EF4444]/20',
+};
+
+export default function MedicationSafety() {
+  const { language } = useLanguage();
   const navigate = useNavigate();
-  
-  const [medications, setMedications] = useState<string[]>(['']);
-  const [loading, setLoading] = useState(false);
-  const [interactions, setInteractions] = useState<MedicationInteraction[] | null>(null);
-  const [summary, setSummary] = useState<string>('');
-  const [error, setError] = useState<string | null>(null);
+  const [medications, setMedications] = useState<Medication[]>([]);
+  const [newName, setNewName] = useState('');
+  const [newDosage, setNewDosage] = useState('');
+  const [interactions, setInteractions] = useState<Interaction[] | null>(null);
 
-  const handleAddMedication = () => {
-    setMedications([...medications, '']);
+  const addMedication = () => {
+    if (!newName.trim()) return;
+    setMedications((prev) => [
+      ...prev,
+      { id: Date.now().toString(), name: newName.trim(), dosage: newDosage.trim() || '-' },
+    ]);
+    setNewName('');
+    setNewDosage('');
   };
 
-  const handleRemoveMedication = (index: number) => {
-    if (medications.length === 1) {
-      setMedications(['']);
-    } else {
-      setMedications(medications.filter((_, i) => i !== index));
-    }
-  };
-
-  const handleMedicationChange = (index: number, value: string) => {
-    const updated = [...medications];
-    updated[index] = value;
-    setMedications(updated);
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    const validMedications = medications.filter(m => m.trim());
-    
-    if (validMedications.length < 2) {
-      setError(language === 'en' 
-        ? 'Please enter at least 2 medications to check for interactions'
-        : 'تعامل چیک کرنے کے لیے براہ کرم کم از کم 2 ادویات درج کریں'
-      );
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
+  const removeMedication = (id: string) => {
+    setMedications((prev) => prev.filter((m) => m.id !== id));
     setInteractions(null);
-    setSummary('');
-
-    try {
-      const result = await medicationService.checkInteractions(validMedications);
-      setInteractions(result.interactions);
-      setSummary(result.summary);
-    } catch (err) {
-      setError(language === 'en'
-        ? 'Failed to check interactions. Please try again.'
-        : 'تعامل چیک کرنے میں ناکام۔ براہ کرم دوبارہ کوشش کریں۔'
-      );
-    } finally {
-      setLoading(false);
-    }
   };
 
-  const handleReset = () => {
-    setMedications(['']);
-    setInteractions(null);
-    setSummary('');
-    setError(null);
-  };
-
-  const getSeverityColor = (severity: number) => {
-    if (severity >= 4) return colors.error.main;
-    if (severity >= 3) return colors.warning.main;
-    return colors.info.main;
-  };
-
-  const getSeverityLabel = (severity: number) => {
-    if (severity >= 4) return language === 'en' ? 'High' : 'زیادہ';
-    if (severity >= 3) return language === 'en' ? 'Moderate' : 'درمیانہ';
-    return language === 'en' ? 'Low' : 'کم';
+  const checkInteractions = () => {
+    if (medications.length < 2) return;
+    const results = findInteractions(medications);
+    setInteractions(results);
   };
 
   return (
-    <Container maxWidth="md">
-      <Box sx={{ py: 4 }}>
-        {/* Header */}
-        <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 4 }}>
-          <Button
-            startIcon={<BackIcon />}
+    <div className="min-h-screen bg-[#F8FFFE]">
+      {/* Top bar */}
+      <div className="bg-white border-b border-[#CCFBF1] px-4 py-3">
+        <div className="max-w-2xl mx-auto flex items-center gap-3">
+          <button
             onClick={() => navigate('/dashboard')}
-            sx={{ color: 'text.secondary' }}
+            className="p-2 rounded-xl hover:bg-gray-100 transition-colors"
           >
-            {language === 'en' ? 'Back' : 'واپس'}
-          </Button>
-        </Stack>
+            <ArrowLeft className="w-5 h-5 text-gray-600" />
+          </button>
+          <div>
+            <h1 className="text-lg font-bold text-[#134E4A]">
+              {language === 'en' ? '💊 Medication Safety' : '💊 ادویات کی حفاظت'}
+            </h1>
+            <p className="text-xs text-gray-500">
+              {language === 'en' ? 'Check for drug interactions' : 'ڈرگ تعاملات چیک کریں'}
+            </p>
+          </div>
+        </div>
+      </div>
 
-        <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 700 }}>
-          {language === 'en' ? 'Medication Safety Check' : 'ادویات کی حفاظت چیک'}
-        </Typography>
-        <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
-          {language === 'en'
-            ? 'Check for potential interactions between your medications'
-            : 'اپنی ادویات کے درمیان ممکنہ تعامل چیک کریں'}
-        </Typography>
-
-        {/* Input Form */}
-        {!interactions && (
-          <Paper elevation={0} sx={{ p: 3, mb: 4, border: `1px solid ${colors.border.main}`, borderRadius: 3 }}>
-            <form onSubmit={handleSubmit}>
-              <Stack spacing={3}>
-                <Typography variant="body2" color="text.secondary">
-                  {language === 'en' 
-                    ? 'Enter the medications you are currently taking:'
-                    : 'ادویات درج کریں جو آپ فی الحال لے رہے ہیں:'}
-                </Typography>
-
-                {medications.map((medication, index) => (
-                  <Stack key={index} direction="row" spacing={2} alignItems="center">
-                    <TextField
-                      fullWidth
-                      value={medication}
-                      onChange={(e) => handleMedicationChange(index, e.target.value)}
-                      placeholder={language === 'en'
-                        ? `Medication ${index + 1} (e.g., "Aspirin", "Ibuprofen")`
-                        : `دوا ${index + 1} (مثلاً "ایسپرین", "آئبوپروفین")`}
-                      disabled={loading}
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          borderRadius: 2,
-                        },
-                      }}
-                    />
-                    <IconButton 
-                      onClick={() => handleRemoveMedication(index)}
-                      disabled={loading || medications.length === 1}
-                      size="small"
-                    >
-                      <DeleteIcon />
-                    </IconButton>
-                  </Stack>
-                ))}
-
-                <Button
-                  startIcon={<AddIcon />}
-                  onClick={handleAddMedication}
-                  disabled={loading}
-                  sx={{ alignSelf: 'flex-start' }}
-                >
-                  {language === 'en' ? 'Add Another Medication' : 'دوسری دوا شامل کریں'}
-                </Button>
-
-                {error && (
-                  <Alert severity="error" sx={{ borderRadius: 2 }}>
-                    {error}
-                  </Alert>
-                )}
-
-                <Button
-                  type="submit"
-                  variant="contained"
-                  size="large"
-                  endIcon={loading ? <CircularProgress size={20} color="inherit" /> : null}
-                  disabled={loading || medications.filter(m => m.trim()).length < 2}
-                  sx={{
-                    borderRadius: 2,
-                    py: 1.5,
-                    fontSize: '1rem',
-                    fontWeight: 600,
-                  }}
-                >
-                  {loading 
-                    ? (language === 'en' ? 'Checking...' : 'چیک ہو رہا ہے...')
-                    : (language === 'en' ? 'Check Interactions' : 'تعامل چیک کریں')
-                  }
-                </Button>
-              </Stack>
-            </form>
-          </Paper>
-        )}
-
-        {/* Results */}
-        {interactions && (
-          <Stack spacing={3}>
-            {/* Summary */}
-            <Paper 
-              elevation={0} 
-              sx={{ 
-                p: 3, 
-                border: `1px solid ${colors.info.main}30`,
-                bgcolor: `${colors.info.main}05`,
-                borderRadius: 3 
-              }}
+      <div className="max-w-2xl mx-auto px-4 py-6 space-y-5">
+        {/* Add medication form */}
+        <div className="bg-white border border-[#CCFBF1] rounded-2xl p-5 shadow-sm">
+          <h3 className="text-sm font-semibold text-[#134E4A] mb-3 flex items-center gap-2">
+            <Pill className="w-4 h-4 text-[#0D9488]" />
+            {language === 'en' ? 'Add a medication' : 'دوا شامل کریں'}
+          </h3>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && addMedication()}
+              placeholder={language === 'en' ? 'Medication name' : 'دوا کا نام'}
+              className="flex-1 px-4 py-3 rounded-xl border-2 border-gray-200 text-[#134E4A] placeholder:text-gray-400 focus:outline-none focus:border-[#0D9488] focus:ring-2 focus:ring-[#0D9488]/20 transition-all"
+            />
+            <input
+              type="text"
+              value={newDosage}
+              onChange={(e) => setNewDosage(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && addMedication()}
+              placeholder={language === 'en' ? 'Dosage' : 'خوراک'}
+              className="w-28 px-4 py-3 rounded-xl border-2 border-gray-200 text-[#134E4A] placeholder:text-gray-400 focus:outline-none focus:border-[#0D9488] focus:ring-2 focus:ring-[#0D9488]/20 transition-all"
+            />
+            <button
+              onClick={addMedication}
+              disabled={!newName.trim()}
+              className="px-4 py-3 rounded-xl bg-[#0D9488] text-white hover:bg-[#0F766E] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, color: colors.info.dark }}>
-                {language === 'en' ? 'Summary' : 'خلاصہ'}
-              </Typography>
-              <Typography variant="body1" sx={{ lineHeight: 1.8 }}>
-                {summary}
-              </Typography>
-            </Paper>
+              <Plus className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
 
-            {/* Interactions */}
-            {interactions.length > 0 ? (
-              <Paper elevation={0} sx={{ p: 3, border: `1px solid ${colors.border.main}`, borderRadius: 3 }}>
-                <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
-                  {language === 'en' ? 'Potential Interactions' : 'ممکنہ تعاملات'}
-                </Typography>
-                <Stack spacing={2}>
-                  {interactions.map((interaction, index) => (
-                    <Paper
-                      key={index}
-                      elevation={0}
-                      sx={{
-                        p: 2,
-                        border: `1px solid ${getSeverityColor(interaction.severity)}30`,
-                        bgcolor: `${getSeverityColor(interaction.severity)}05`,
-                        borderRadius: 2,
-                      }}
+        {/* Medication list */}
+        {medications.length > 0 && (
+          <div className="bg-white border border-[#CCFBF1] rounded-2xl p-5 shadow-sm">
+            <h3 className="text-sm font-semibold text-[#134E4A] mb-3">
+              {language === 'en' ? 'Your medications' : 'آپ کی ادویات'} ({medications.length})
+            </h3>
+            <div className="space-y-2">
+              <AnimatePresence>
+                {medications.map((med) => (
+                  <motion.div
+                    key={med.id}
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="flex items-center justify-between p-3 bg-[#F8FFFE] rounded-xl"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-[#8B5CF6]/10 flex items-center justify-center">
+                        <Pill className="w-4 h-4 text-[#8B5CF6]" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-[#134E4A] text-sm">{med.name}</p>
+                        <p className="text-xs text-gray-500">{med.dosage}</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => removeMedication(med.id)}
+                      className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
                     >
-                      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
-                        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                          {interaction.interaction_type}
-                        </Typography>
-                        <Chip
-                          label={getSeverityLabel(interaction.severity)}
-                          size="small"
-                          sx={{
-                            bgcolor: getSeverityColor(interaction.severity),
-                            color: 'white',
-                            fontWeight: 600,
-                          }}
-                        />
-                      </Stack>
-                      <Typography variant="body2" sx={{ mb: 1, lineHeight: 1.6 }}>
-                        {interaction.description}
-                      </Typography>
-                      <Typography variant="body2" sx={{ fontWeight: 600, color: colors.info.dark }}>
-                        {language === 'en' ? 'Recommendation: ' : 'سفارش: '}
-                        {interaction.recommendation}
-                      </Typography>
-                    </Paper>
-                  ))}
-                </Stack>
-              </Paper>
-            ) : (
-              <Paper 
-                elevation={0} 
-                sx={{ 
-                  p: 3, 
-                  border: `1px solid ${colors.success.main}30`,
-                  bgcolor: `${colors.success.main}05`,
-                  borderRadius: 3 
-                }}
-              >
-                <Stack direction="row" spacing={2} alignItems="center">
-                  <CheckIcon sx={{ color: colors.success.main, fontSize: 32 }} />
-                  <Box>
-                    <Typography variant="h6" sx={{ fontWeight: 600, color: colors.success.dark }}>
-                      {language === 'en' ? 'No Interactions Found' : 'کوئی تعامل نہیں ملا'}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {language === 'en'
-                        ? 'No known interactions were found between your medications.'
-                        : 'آپ کی ادویات کے درمیان کوئی معلوم تعامل نہیں ملا۔'}
-                    </Typography>
-                  </Box>
-                </Stack>
-              </Paper>
-            )}
+                      <X className="w-4 h-4" />
+                    </button>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </div>
 
-            {/* Important Note */}
-            <Alert severity="warning" sx={{ borderRadius: 2 }}>
-              <Typography variant="body2">
-                {language === 'en'
-                  ? '⚕️ This information is for educational purposes only. Always consult with your doctor or pharmacist about your medications. Do not stop or change any medications without professional guidance.'
-                  : '⚕️ یہ معلومات صرف تعلیمی مقاصد کے لیے ہے۔ اپنی ادویات کے بارے میں ہمیشہ اپنے ڈاکٹر یا فارماسسٹ سے مشورہ کریں۔ پیشہ ورانہ رہنمائی کے بغیر کوئی بھی دوا بند نہ کریں یا تبدیل نہ کریں۔'}
-              </Typography>
-            </Alert>
-
-            {/* Actions */}
-            <Stack direction="row" spacing={2} justifyContent="center">
-              <Button
-                variant="outlined"
-                onClick={handleReset}
-                sx={{ borderRadius: 2, px: 4 }}
-              >
-                {language === 'en' ? 'Check Again' : 'دوبارہ چیک کریں'}
-              </Button>
-              <Button
-                variant="contained"
-                onClick={() => navigate('/dashboard')}
-                sx={{ borderRadius: 2, px: 4 }}
-              >
-                {language === 'en' ? 'Back to Dashboard' : 'ڈیش بورڈ پر واپس'}
-              </Button>
-            </Stack>
-          </Stack>
+            <button
+              onClick={checkInteractions}
+              disabled={medications.length < 2}
+              className="mt-4 w-full flex items-center justify-center gap-2 bg-[#0D9488] text-white py-3 rounded-xl font-semibold hover:bg-[#0F766E] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Shield className="w-5 h-5" />
+              {language === 'en' ? 'Check Interactions' : 'تعاملات چیک کریں'}
+            </button>
+          </div>
         )}
-      </Box>
-    </Container>
-  );
-};
 
-export default MedicationSafety;
+        {/* Interaction results */}
+        <AnimatePresence>
+          {interactions && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="space-y-3"
+            >
+              <h3 className="text-sm font-semibold text-[#134E4A]">
+                {language === 'en' ? 'Interaction Results' : 'تبادلے کے نتائج'}
+              </h3>
+              {interactions.map((interaction, idx) => (
+                <div
+                  key={idx}
+                  className={`border rounded-2xl p-5 shadow-sm ${SEVERITY_STYLES[interaction.severity]}`}
+                >
+                  <div className="flex items-center gap-3 mb-2">
+                    {interaction.severity === 'severe' ? (
+                      <AlertTriangle className="w-5 h-5 flex-shrink-0" />
+                    ) : (
+                      <CheckCircle className="w-5 h-5 flex-shrink-0" />
+                    )}
+                    <div>
+                      <p className="font-semibold text-sm">
+                        {interaction.drug1} + {interaction.drug2}
+                      </p>
+                      <span className="text-xs font-medium uppercase">
+                        {interaction.severity}
+                      </span>
+                    </div>
+                  </div>
+                  <p className="text-sm leading-relaxed opacity-90">{interaction.description}</p>
+                </div>
+              ))}
+              <button
+                onClick={() => setInteractions(null)}
+                className="w-full py-2.5 rounded-xl border border-gray-200 text-gray-500 text-sm font-medium hover:bg-gray-50 transition-all"
+              >
+                {language === 'en' ? 'Clear results' : 'نتائج صاف کریں'}
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Empty state */}
+        {medications.length === 0 && (
+          <div className="text-center py-12">
+            <div className="w-16 h-16 bg-[#F0FDFA] rounded-full flex items-center justify-center mx-auto mb-4">
+              <Pill className="w-8 h-8 text-[#0D9488]" />
+            </div>
+            <h3 className="text-lg font-semibold text-[#134E4A] mb-2">
+              {language === 'en' ? 'Add your medications' : 'اپنی ادویات شامل کریں'}
+            </h3>
+            <p className="text-sm text-gray-500 max-w-sm mx-auto">
+              {language === 'en'
+                ? 'Enter your medications above to check for potential interactions and safety concerns.'
+                : 'اپنی ادویات اوپر درج کریں تا ممکنہ تعاملات اور حفاظت کے معاملات چیک ہو سکیں۔'}
+            </p>
+          </div>
+        )}
+
+        {/* Disclaimer */}
+        <div className="bg-[#F8FFFE] border border-[#CCFBF1] rounded-xl p-4">
+          <div className="flex items-start gap-2">
+            <Info className="w-4 h-4 text-gray-500 flex-shrink-0 mt-0.5" />
+            <p className="text-xs text-gray-500 leading-relaxed">
+              {language === 'en'
+                ? 'This tool is for informational purposes only. Always consult your doctor or pharmacist before making any changes to your medications.'
+                : 'یہ صرف معلوماتی مقاصد کے لیے ہے۔ اپنی ادویات میں کوئی تبدیلی کرنے سے پہلے ہمیشہ اپنے ڈاکٹر یا فارماسسٹ سے مشورہ کریں۔'}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

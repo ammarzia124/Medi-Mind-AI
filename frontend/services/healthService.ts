@@ -1,41 +1,40 @@
-// Health analysis service
-// This would connect to backend API in production
-
-import { SymptomResult, LabAnalysis } from '../types';
+// Legacy health service - unused, kept for compatibility
 
 export const healthService = {
-  async analyzeSymptoms(input: string): Promise<SymptomResult> {
-    // Simulate API call
+  async analyzeSymptoms(_input: string) {
     await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    // Return mock analysis
     return {
-      causes: ['Common viral illness', 'Stress-related symptoms'],
-      severity: 'low',
-      recommendation: 'Monitor symptoms and practice self-care.',
-      whenToSeeDoctor: 'See a doctor if symptoms worsen or persist.',
-      selfCare: ['Rest and stay hydrated', 'Eat nutritious meals'],
-      careNavigation: 'selfCare',
+      severity: 2,
+      urgency: 'self_care' as const,
+      summary: 'Mock analysis result.',
+      possible_explanations: ['Common viral illness'],
+      warning_signs: ['Monitor symptoms'],
+      recommended_action: 'Consult a healthcare professional.',
+      self_care: ['Rest and stay hydrated'],
+      disclaimer: 'For educational purposes only.',
     };
   },
 
-  async analyzeLabReport(input: string): Promise<LabAnalysis> {
-    // Simulate API call
+  async analyzeLabReport(_input: string) {
     await new Promise(resolve => setTimeout(resolve, 1800));
-    
-    // Return mock analysis
     return {
+      severity: 2,
+      urgency: 'self_care' as const,
+      overall_status: 'normal' as const,
       results: [
         {
-          name: 'Test Result',
-          value: 'Normal',
-          unit: '',
-          status: 'normal',
-          explanation: 'Results appear within acceptable ranges.',
+          test_name: 'Test Result',
+          result_value: 'Normal',
+          status: 'normal' as const,
+          what_is_this: 'Lab result.',
+          what_it_means: 'Results appear within acceptable ranges.',
+          what_to_do: 'Discuss with your doctor.',
         },
       ],
-      summary: 'Your lab results appear generally within normal ranges.',
-      nextSteps: ['Discuss results with your doctor', 'Continue regular check-ups'],
+      summary: { in_simple_words: ['Results appear normal.'] },
+      disclaimer: 'For educational purposes only.',
+      confidence_score: 0.8,
+      language: 'en' as const,
     };
   },
 };

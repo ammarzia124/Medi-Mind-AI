@@ -26,7 +26,7 @@ export interface User {
 
 export interface AuthResponse {
   success: boolean;
-   {
+  data: {
     token: string;
     user: User;
   };
@@ -77,7 +77,7 @@ export const authService = {
    * Get current user profile
    */
   async getProfile(): Promise<User> {
-    const response = await apiClient.get<{ success: boolean;  User }>('/auth/profile');
+    const response = await apiClient.get<{ success: boolean; data: User }>('/auth/profile');
     
     if (!response.data.success) {
       throw new Error('Failed to fetch profile');
@@ -90,7 +90,7 @@ export const authService = {
    * Update user profile
    */
   async updateProfile(data: Partial<User>): Promise<User> {
-    const response = await apiClient.put<{ success: boolean;  User }>('/auth/profile', data);
+    const response = await apiClient.put<{ success: boolean; data: User }>('/auth/profile', data);
     
     if (!response.data.success) {
       throw new Error('Failed to update profile');

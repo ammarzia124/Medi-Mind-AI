@@ -1,10 +1,7 @@
-// Layout Components
-export { AppShell } from './layout/AppShell';
-
-// Shared Components
-export { HealthActionCard } from './shared/HealthActionCard';
-export { SeverityIndicator } from './shared/SeverityIndicator';
-export { EmergencyAlert } from './shared/EmergencyAlert';
-export { EmptyState } from './shared/EmptyState';
-export { LoadingSkeleton } from './shared/LoadingSkeleton';
-export { ErrorState } from './shared/ErrorState';
+// UI Components
+export { default as Button } from './ui/Button';
+export { default as Card } from './ui/Card';
+export { default as Input } from './ui/Input';
+export { default as Badge } from './ui/Badge';
+export { default as EmptyState } from './ui/EmptyState';
+export { default as LoadingSpinner } from './ui/LoadingSpinner';

@@ -180,30 +180,27 @@ export function validateSymptomAnalysis(
 export const FALLBACK_LAB_ANALYSIS: LabAnalysis = {
   severity: 3,
   urgency: 'doctor_soon',
-  summary: 'We were unable to analyze your lab results with confidence. Lab results require professional interpretation in the context of your complete medical history.',
+  overall_status: 'unreadable',
   results: [
     {
-      name: 'Lab Results',
-      value: '—',
-      unit: '',
-      status: 'within_reference_range',
-      what_this_may_mean: 'Unable to interpret these results. Please consult your healthcare provider for proper evaluation.',
+      test_name: 'Lab Results',
+      result_value: '—',
+      status: 'unreadable',
+      what_is_this: 'Lab results provide information about your health.',
+      what_it_means: 'We were unable to interpret these results automatically.',
+      what_to_do: 'Please consult your healthcare provider for proper evaluation.',
     },
   ],
-  warning_signs: [
-    '⚠️ Any result marked as abnormal should be discussed with your doctor',
-    '⚠️ Lab results should never be interpreted in isolation',
-    '⚠️ Reference ranges vary between laboratories',
-  ],
-  recommended_action: 'Please discuss these results with your healthcare provider who can interpret them in the context of your overall health and medical history.',
-  next_steps: [
-    '📋 Schedule an appointment with your doctor',
-    '📁 Bring a copy of your complete lab report',
-    '📝 Note any symptoms you are experiencing',
-    '❓ Prepare questions for your healthcare provider',
-  ],
-  important_note: 'Lab results should always be interpreted by a qualified healthcare professional who knows your medical history. Reference ranges vary between laboratories.',
+  summary: {
+    in_simple_words: [
+      'We were unable to analyze your lab results with confidence.',
+      'Lab results require professional interpretation.',
+      'Please consult a healthcare provider for proper evaluation.',
+    ],
+  },
   disclaimer: '⚕️ This is a fallback response because the analysis could not be completed. This is NOT a medical diagnosis. Please consult a qualified healthcare professional.',
+  confidence_score: 0,
+  language: 'en',
 };
 
 /**
