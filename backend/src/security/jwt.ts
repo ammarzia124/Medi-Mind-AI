@@ -21,7 +21,11 @@ export function verifyToken(token: string): TokenPayload | null {
   }
 }
 
-export function decodeToken(token: string): TokenPayload | null {
+/**
+ * Decode token WITHOUT verification - USE WITH CAUTION
+ * Only use for inspecting token contents, never for authentication
+ */
+export function decodeTokenUnsafe(token: string): TokenPayload | null {
   try {
     const decoded = jwt.decode(token) as TokenPayload;
     return decoded;

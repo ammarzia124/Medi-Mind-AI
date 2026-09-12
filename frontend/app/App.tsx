@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider, CssBaseline, CircularProgress, Box } from '@mui/material';
 import { LanguageProvider, useLanguage } from '../contexts/LanguageContext';
 import { theme, rtlTheme } from '../theme/theme';
+import ErrorBoundary from '../components/ErrorBoundary';
 
 // Lazy load pages for better performance
 const LandingPage = React.lazy(() => import('../features/landing/LandingPage'));
@@ -70,13 +71,15 @@ const AppContent: React.FC = () => {
 // Main App component
 const App: React.FC = () => {
   return (
-    <QueryClientProvider client={queryClient}>
-      <LanguageProvider>
-        <ThemeWrapper>
-          <AppContent />
-        </ThemeWrapper>
-      </LanguageProvider>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <LanguageProvider>
+          <ThemeWrapper>
+            <AppContent />
+          </ThemeWrapper>
+        </LanguageProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 };
 
