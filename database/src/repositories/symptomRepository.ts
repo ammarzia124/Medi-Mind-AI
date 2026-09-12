@@ -31,11 +31,11 @@ export class SymptomRepository {
   }
 
   /**
-   * Find symptom by ID
+   * Find symptom by ID (with user authorization)
    */
-  async findById(id: string): Promise<Symptom | null> {
-    const query = 'SELECT * FROM symptoms WHERE id = $1';
-    const result = await db.query<Symptom>(query, [id]);
+  async findById(id: string, userId: string): Promise<Symptom | null> {
+    const query = 'SELECT * FROM symptoms WHERE id = $1 AND user_id = $2';
+    const result = await db.query<Symptom>(query, [id, userId]);
     return result.rows[0] || null;
   }
 
@@ -72,9 +72,9 @@ export class SymptomRepository {
   }
 
   /**
-   * Update symptom
+   * Update symptom (with user authorization)
    */
-  async update(id: string, input: UpdateSymptomInput): Promise<Symptom | null> {
+  async update(id: string, userId: string, input: UpdateSymptomInput): Promise<Symptom | null> {
     const fields: string[] = [];
     const values: any[] = [];
     let paramIndex = 1;
@@ -101,31 +101,31 @@ export class SymptomRepository {
     }
 
     if (fields.length === 0) {
-      return await this.findById(id);
+      return await this.findById(id, userId);
     }
 
     fields.push(`updated_at = NOW()`);
-    values.push(id);
+    values.push(id, userId);
 
     const query = `
       UPDATE symptoms
       SET ${fields.join(', ')}
-      WHERE id = $${paramIndex}
+      WHERE id = $${paramIndex} AND user_id = $${paramIndex + 1}
       RETURNING *
     `;
 
     const result = await db.query<Symptom>(query, values);
-    logger.info('Symptom updated', { symptomId: id });
+    logger.info('Symptom updated', { symptomId: id, userId });
     return result.rows[0] || null;
   }
 
   /**
-   * Delete symptom
+   * Delete symptom (with user authorization)
    */
-  async delete(id: string): Promise<boolean> {
-    const query = 'DELETE FROM symptoms WHERE id = $1';
-    const result = await db.query(query, [id]);
-    logger.info('Symptom deleted', { symptomId: id });
+  async delete(id: string, userId: string): Promise<boolean> {
+    const query = 'DELETE FROM symptoms WHERE id = $1 AND user_id = $2';
+    const result = await db.query(query, [id, userId]);
+    logger.info('Symptom deleted', { symptomId: id, userId });
     return (result.rowCount || 0) > 0;
   }
 }

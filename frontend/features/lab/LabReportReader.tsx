@@ -101,6 +101,8 @@ export const LabReportReader: React.FC = () => {
     setResult(null);
   };
 
+  const [statusMessage, setStatusMessage] = useState<string>('');
+
   const handleSubmit = async () => {
     if (!file) return;
 
@@ -108,6 +110,7 @@ export const LabReportReader: React.FC = () => {
       setError(null);
       setProcessingStage('uploading');
       setUploadProgress(0);
+      setStatusMessage(t('Uploading your report...', 'آپ کی رپورٹ اپ لوڈ ہو رہی ہے...'));
 
       // Simulate upload progress
       const uploadInterval = setInterval(() => {
@@ -124,24 +127,31 @@ export const LabReportReader: React.FC = () => {
       clearInterval(uploadInterval);
       setUploadProgress(100);
 
-      // Reading stage
+      // Reading stage with status messages
       setProcessingStage('reading');
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      setStatusMessage(t('Reading your report...', 'آپ کی رپورٹ پڑھی جا رہی ہے...'));
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      setStatusMessage(t('Finding test results...', 'ٹیسٹ کے نتائج تلاش کیے جا رہے ہیں...'));
+      await new Promise(resolve => setTimeout(resolve, 800));
 
-      // Analyzing stage
+      // Analyzing stage with status messages
       setProcessingStage('analyzing');
+      setStatusMessage(t('Preparing a simple explanation...', 'آسان وضاحت تیار کی جا رہی ہے...'));
       
       // Call backend API
       const analysis = await labService.analyzeLabReport(file.name);
       
       setResult(analysis);
       setProcessingStage('complete');
+      setStatusMessage('');
     } catch (err) {
       setError(t(
         'Failed to analyze lab report. Please try again.',
         'لیب رپورٹ کا تجزیہ کرنے میں ناکام۔ براہ کرم دوبارہ کوشش کریں۔'
       ));
       setProcessingStage('error');
+      setStatusMessage('');
     }
   };
 
@@ -299,23 +309,31 @@ export const LabReportReader: React.FC = () => {
     );
   }
 
-  // Processing Screen
+  // Processing Screen - Enhanced Demo Flow
   if (processingStage === 'uploading' || processingStage === 'reading' || processingStage === 'analyzing') {
     return (
       <Container maxWidth="md" sx={{ py: 4 }}>
         <Stack alignItems="center" spacing={4} sx={{ py: 8 }}>
           {processingStage === 'uploading' && (
             <>
-              <UploadIcon sx={{ fontSize: 64, color: colors.primary.main }} />
-              <Typography variant="h5" sx={{ fontWeight: 600 }}>
-                {t('Uploading your report...', 'آپ کی رپورٹ اپ لوڈ ہو رہی ہے...')}
+              <UploadIcon sx={{ fontSize: 80, color: colors.primary.main, animation: 'pulse 2s infinite' }} />
+              <Typography variant="h4" sx={{ fontWeight: 700, textAlign: 'center' }}>
+                {statusMessage || t('Uploading your report...', 'آپ کی رپورٹ اپ لوڈ ہو رہی ہے...')}
               </Typography>
               <LinearProgress 
                 variant="determinate" 
                 value={uploadProgress} 
-                sx={{ width: '100%', maxWidth: 400, height: 8, borderRadius: 1 }}
+                sx={{ 
+                  width: '100%', 
+                  maxWidth: 500, 
+                  height: 10, 
+                  borderRadius: 2,
+                  '& .MuiLinearProgress-bar': {
+                    backgroundColor: colors.primary.main,
+                  }
+                }}
               />
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="h6" color="text.secondary" sx={{ fontWeight: 600 }}>
                 {uploadProgress}%
               </Typography>
             </>
@@ -323,21 +341,51 @@ export const LabReportReader: React.FC = () => {
 
           {processingStage === 'reading' && (
             <>
-              <FileIcon sx={{ fontSize: 64, color: colors.primary.main, animation: 'pulse 2s infinite' }} />
-              <Typography variant="h5" sx={{ fontWeight: 600 }}>
-                {t('Reading your report...', 'آپ کی رپورٹ پڑھی جا رہی ہے...')}
+              <FileIcon sx={{ fontSize: 80, color: colors.primary.main, animation: 'pulse 2s infinite' }} />
+              <Typography variant="h4" sx={{ fontWeight: 700, textAlign: 'center' }}>
+                {statusMessage}
               </Typography>
-              <LinearProgress sx={{ width: '100%', maxWidth: 400, height: 8, borderRadius: 1 }} />
+              <LinearProgress 
+                sx={{ 
+                  width: '100%', 
+                  maxWidth: 500, 
+                  height: 10, 
+                  borderRadius: 2,
+                  '& .MuiLinearProgress-bar': {
+                    backgroundColor: colors.primary.main,
+                  }
+                }} 
+              />
+              <Typography variant="body1" color="text.secondary" sx={{ textAlign: 'center', mt: 2 }}>
+                {language === 'en' 
+                  ? 'This usually takes a few seconds...'
+                  : 'اس میں عام طور پر چند سیکنڈ لگتے ہیں...'}
+              </Typography>
             </>
           )}
 
           {processingStage === 'analyzing' && (
             <>
-              <InfoIcon sx={{ fontSize: 64, color: colors.primary.main, animation: 'pulse 2s infinite' }} />
-              <Typography variant="h5" sx={{ fontWeight: 600 }}>
-                {t('Analyzing your results...', 'آپ کے نتائج کا تجزیہ ہو رہا ہے...')}
+              <InfoIcon sx={{ fontSize: 80, color: colors.primary.main, animation: 'pulse 2s infinite' }} />
+              <Typography variant="h4" sx={{ fontWeight: 700, textAlign: 'center' }}>
+                {statusMessage}
               </Typography>
-              <LinearProgress sx={{ width: '100%', maxWidth: 400, height: 8, borderRadius: 1 }} />
+              <LinearProgress 
+                sx={{ 
+                  width: '100%', 
+                  maxWidth: 500, 
+                  height: 10, 
+                  borderRadius: 2,
+                  '& .MuiLinearProgress-bar': {
+                    backgroundColor: colors.primary.main,
+                  }
+                }} 
+              />
+              <Typography variant="body1" color="text.secondary" sx={{ textAlign: 'center', mt: 2 }}>
+                {language === 'en' 
+                  ? 'Almost ready...'
+                  : 'تقریباً تیار ہے...'}
+              </Typography>
             </>
           )}
         </Stack>
@@ -493,22 +541,126 @@ export const LabReportReader: React.FC = () => {
           </TableContainer>
         </Paper>
 
+        {/* Language Switcher - WOW MOMENT */}
+        <Paper 
+          elevation={0} 
+          sx={{ 
+            mb: 4, 
+            p: 3,
+            border: `1px solid ${colors.border.main}`,
+            borderRadius: 3,
+            bgcolor: colors.background.subtle,
+            textAlign: 'center',
+          }}
+        >
+          <Typography variant="body1" sx={{ mb: 2, fontWeight: 500 }}>
+            {language === 'en' 
+              ? '🌍 See this in another language:'
+              : '🌍 دوسری زبان میں دیکھیں:'}
+          </Typography>
+          <Stack direction="row" spacing={2} justifyContent="center">
+            <Button
+              variant={language === 'en' ? 'contained' : 'outlined'}
+              onClick={() => language !== 'en' && window.location.reload()}
+              sx={{ borderRadius: 2, minWidth: 100 }}
+            >
+              English
+            </Button>
+            <Button
+              variant={language === 'ur' ? 'contained' : 'outlined'}
+              onClick={() => language !== 'ur' && window.location.reload()}
+              sx={{ borderRadius: 2, minWidth: 100 }}
+            >
+              اردو
+            </Button>
+          </Stack>
+        </Paper>
+
+        {/* Care Navigation - WOW MOMENT */}
+        <Paper 
+          elevation={0} 
+          sx={{ 
+            mb: 4, 
+            p: 4,
+            border: `2px solid ${colors.primary.main}`,
+            borderRadius: 3,
+            bgcolor: colors.primary[50],
+          }}
+        >
+          <Stack direction="row" spacing={2} alignItems="flex-start" sx={{ mb: 3 }}>
+            <Box
+              sx={{
+                width: 48,
+                height: 48,
+                borderRadius: '50%',
+                bgcolor: colors.primary.main,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'white',
+                flexShrink: 0,
+              }}
+            >
+              <InfoIcon sx={{ fontSize: 28 }} />
+            </Box>
+            <Box sx={{ flex: 1 }}>
+              <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
+                {t('What should I do next?', 'مجھے آگے کیا کرنا چاہیے؟')}
+              </Typography>
+              <Typography variant="body1" sx={{ fontWeight: 500, lineHeight: 1.6 }}>
+                {result.urgency === 'self_care' && t(
+                  'Your results look generally good. Continue maintaining a healthy lifestyle.',
+                  'آپ کے نتائج عام طور پر اچھے لگ رہے ہیں۔ صحت مند طرز زندگی جاری رکھیں۔'
+                )}
+                {result.urgency === 'monitor' && t(
+                  'Some results need attention. Monitor your health and consider discussing with your doctor.',
+                  'کچھ نتائج کو توجہ کی ضرورت ہے۔ اپنی صحت کی نگرانی کریں اور اپنے ڈاکٹر سے بات کرنے پر غور کریں۔'
+                )}
+                {result.urgency === 'doctor_soon' && t(
+                  'Schedule a visit with your doctor to discuss these results.',
+                  'ان نتائج پر بات کرنے کے لیے اپنے ڈاکٹر کے ساتھ ملاقات شیڈول کریں۔'
+                )}
+                {result.urgency === 'urgent' && t(
+                  'Please seek medical attention soon. Some results need professional evaluation.',
+                  'براہ کرم جلد طبی امداد حاصل کریں۔ کچھ نتائج کو پیشہ ورانہ جائزے کی ضرورت ہے۔'
+                )}
+                {result.urgency === 'emergency' && t(
+                  'Seek immediate medical attention. Some results require urgent care.',
+                  'فوری طبی امداد حاصل کریں۔ کچھ نتائج کو فوری دیکھ بھال کی ضرورت ہے۔'
+                )}
+              </Typography>
+            </Box>
+          </Stack>
+          
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+            <Button
+              variant="contained"
+              size="large"
+              onClick={() => navigate('/symptoms')}
+              sx={{ borderRadius: 2, fontWeight: 600 }}
+            >
+              {t('Check Symptoms', 'علامات چیک کریں')}
+            </Button>
+            <Button
+              variant="outlined"
+              size="large"
+              onClick={handleRemoveFile}
+              sx={{ borderRadius: 2, fontWeight: 600 }}
+            >
+              {t('Analyze Another Report', 'دوسری رپورٹ کا تجزیہ کریں')}
+            </Button>
+          </Stack>
+        </Paper>
+
         {/* Disclaimer */}
-        <Alert severity="info" sx={{ borderRadius: 2 }}>
+        <Alert severity="info" sx={{ borderRadius: 2, mb: 3 }}>
           {result.disclaimer}
         </Alert>
 
         {/* Actions */}
         <Stack direction="row" spacing={2} sx={{ mt: 3 }}>
           <Button
-            variant="outlined"
-            onClick={handleRemoveFile}
-            sx={{ borderRadius: 2 }}
-          >
-            {t('Analyze Another Report', 'دوسری رپورٹ کا تجزیہ کریں')}
-          </Button>
-          <Button
-            variant="contained"
+            variant="text"
             onClick={() => navigate('/dashboard')}
             sx={{ borderRadius: 2 }}
           >

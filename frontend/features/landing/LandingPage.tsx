@@ -28,27 +28,28 @@ export const LandingPage: React.FC = () => {
 
   const features = [
     {
-      icon: <HeartIcon sx={{ fontSize: 40 }} />,
-      title: language === 'en' ? 'Symptom Checker' : 'علامات چیکر',
-      description: language === 'en'
-        ? 'Understand your symptoms and get guidance on what to do next'
-        : 'اپنی علامات سمجھیں اور جانیں کہ آگے کیا کرنا ہے',
-      color: colors.primary.main,
-    },
-    {
       icon: <LabIcon sx={{ fontSize: 40 }} />,
       title: language === 'en' ? 'Lab Report Reader' : 'لیب رپورٹ ریڈر',
       description: language === 'en'
-        ? 'Get clear explanations of your lab results in simple language'
-        : 'آسان زبان میں اپنے لیب نتائج کی واضح وضاحت حاصل کریں',
+        ? 'Upload a lab report → Get simple explanations in seconds'
+        : 'لیب رپورٹ اپ لوڈ کریں → سیکنڈوں میں آسان وضاحت حاصل کریں',
       color: colors.info.main,
+      primary: true,
+    },
+    {
+      icon: <HeartIcon sx={{ fontSize: 40 }} />,
+      title: language === 'en' ? 'Symptom Checker' : 'علامات چیکر',
+      description: language === 'en'
+        ? 'Understand symptoms and get care guidance'
+        : 'علامات سمجھیں اور دیکھ بھال کی رہنمائی حاصل کریں',
+      color: colors.primary.main,
     },
     {
       icon: <MedicationIcon sx={{ fontSize: 40 }} />,
       title: language === 'en' ? 'Medication Safety' : 'ادویات کی حفاظت',
       description: language === 'en'
-        ? 'Check for interactions and understand your medications'
-        : 'تعامل چیک کریں اور اپنی ادویات سمجھیں',
+        ? 'Check interactions and understand medications'
+        : 'تعامل چیک کریں اور ادویات سمجھیں',
       color: colors.success.main,
     },
     {
@@ -87,7 +88,7 @@ export const LandingPage: React.FC = () => {
 
   return (
     <Box>
-      {/* Hero Section */}
+      {/* Hero Section - Demo Flow */}
       <Box
         sx={{
           background: `linear-gradient(135deg, ${colors.primary.main} 0%, ${colors.primary.light} 100%)`,
@@ -99,6 +100,22 @@ export const LandingPage: React.FC = () => {
         <Container maxWidth="lg">
           <Grid container spacing={4} alignItems="center">
             <Grid item xs={12} md={7}>
+              {/* Problem Statement */}
+              <Typography 
+                variant="h6" 
+                sx={{ 
+                  mb: 2,
+                  opacity: 0.9,
+                  fontSize: { xs: '1rem', md: '1.1rem' },
+                  fontWeight: 500,
+                }}
+              >
+                {language === 'en'
+                  ? '📋 Medical reports are full of numbers people don\'t understand.'
+                  : '📋 طبی رپورٹیں ایسے نمبروں سے بھری ہوتی ہیں جنہیں لوگ نہیں سمجھتے۔'}
+              </Typography>
+              
+              {/* Solution */}
               <Typography 
                 variant="h2" 
                 component="h1" 
@@ -107,31 +124,36 @@ export const LandingPage: React.FC = () => {
                   fontWeight: 700,
                   fontSize: { xs: '2rem', md: '3rem' },
                   lineHeight: 1.2,
+                  mb: 3,
                 }}
               >
                 {language === 'en'
-                  ? 'Understand your health. Know what to do next.'
-                  : 'اپنی صحت سمجھیں۔ جانیں کہ آگے کیا کرنا ہے۔'}
+                  ? 'What if anyone could understand them in seconds?'
+                  : 'اگر کوئی بھی انہیں سیکنڈوں میں سمجھ سکتا تو؟'}
               </Typography>
+              
               <Typography 
                 variant="h6" 
                 sx={{ 
                   mb: 4, 
-                  opacity: 0.9,
+                  opacity: 0.95,
                   fontSize: { xs: '1rem', md: '1.25rem' },
                   fontWeight: 400,
+                  lineHeight: 1.6,
                 }}
               >
                 {language === 'en'
-                  ? 'MediMind AI helps you understand symptoms, lab reports, and medications — in simple language you can trust.'
-                  : 'میڈی مائنڈ اے آئی آپ کو علامات، لیب رپورٹس، اور ادویات سمجھنے میں مدد کرتا ہے — آسان زبان میں جس پر آپ اعتماد کر سکتے ہیں۔'}
+                  ? 'MediMind AI helps you understand symptoms, lab reports, and medications — in simple language you can trust. Available in English and اردو.'
+                : 'میڈی مائنڈ اے آئی آپ کو علامات، لیب رپورٹس، اور ادویات سمجھنے میں مدد کرتا ہے — آسان زبان میں جس پر آپ اعتماد کر سکتے ہیں۔ انگریزی اور اردو میں دستیاب۔'}
               </Typography>
+              
+              {/* Demo CTAs */}
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
                 <Button
                   variant="contained"
                   size="large"
                   endIcon={<ArrowIcon />}
-                  onClick={() => navigate('/symptoms')}
+                  onClick={() => navigate('/lab')}
                   sx={{
                     bgcolor: 'white',
                     color: colors.primary.main,
@@ -144,12 +166,12 @@ export const LandingPage: React.FC = () => {
                     fontWeight: 600,
                   }}
                 >
-                  {language === 'en' ? 'Check Symptoms' : 'علامات چیک کریں'}
+                  {language === 'en' ? 'Try Lab Report Reader' : 'لیب رپورٹ ریڈر آزمائیں'}
                 </Button>
                 <Button
                   variant="outlined"
                   size="large"
-                  onClick={() => navigate('/dashboard')}
+                  onClick={() => navigate('/symptoms')}
                   sx={{
                     borderColor: 'white',
                     color: 'white',
@@ -163,15 +185,14 @@ export const LandingPage: React.FC = () => {
                     fontWeight: 600,
                   }}
                 >
-                  {language === 'en' ? 'Go to Dashboard' : 'ڈیش بورڈ پر جائیں'}
+                  {language === 'en' ? 'Check Symptoms' : 'علامات چیک کریں'}
                 </Button>
               </Stack>
             </Grid>
           </Grid>
         </Container>
       </Box>
-
-      {/* Features Section */}
+      {/* Features Section - Demo Flow */}
       <Container maxWidth="lg" sx={{ mb: 8 }}>
         <Typography 
           variant="h4" 
@@ -180,7 +201,7 @@ export const LandingPage: React.FC = () => {
           gutterBottom
           sx={{ fontWeight: 700, mb: 2 }}
         >
-          {language === 'en' ? 'Everything you need for your health' : 'آپ کی صحت کے لیے ہر چیز'}
+          {language === 'en' ? 'How it works' : 'یہ کیسے کام کرتا ہے'}
         </Typography>
         <Typography 
           variant="h6" 
@@ -189,8 +210,8 @@ export const LandingPage: React.FC = () => {
           sx={{ mb: 6, fontWeight: 400 }}
         >
           {language === 'en'
-            ? 'Simple tools to help you understand and manage your health'
-            : 'آپ کی صحت کو سمجھنے اور منظم کرنے میں مدد کے لیے آسان ٹولز'}
+            ? 'Three simple steps to understand your health'
+            : 'اپنی صحت سمجھنے کے لیے تین آسان مراحل'}
         </Typography>
 
         <Grid container spacing={4}>
@@ -202,9 +223,10 @@ export const LandingPage: React.FC = () => {
                   p: 3,
                   height: '100%',
                   textAlign: 'center',
-                  border: `1px solid ${colors.border.main}`,
+                  border: feature.primary ? `2px solid ${feature.color}` : `1px solid ${colors.border.main}`,
                   borderRadius: 3,
                   transition: 'all 0.3s',
+                  position: 'relative',
                   '&:hover': {
                     transform: 'translateY(-4px)',
                     boxShadow: 3,
@@ -212,6 +234,25 @@ export const LandingPage: React.FC = () => {
                   },
                 }}
               >
+                {feature.primary && (
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      top: -12,
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      bgcolor: feature.color,
+                      color: 'white',
+                      px: 2,
+                      py: 0.5,
+                      borderRadius: 2,
+                      fontSize: '0.75rem',
+                      fontWeight: 700,
+                    }}
+                  >
+                    {language === 'en' ? 'TRY THIS' : 'یہ آزمائیں'}
+                  </Box>
+                )}
                 <Box
                   sx={{
                     width: 80,
@@ -239,6 +280,58 @@ export const LandingPage: React.FC = () => {
           ))}
         </Grid>
       </Container>
+
+      {/* Language Switching Highlight */}
+      <Box sx={{ bgcolor: colors.background.subtle, py: 8, mb: 8 }}>
+        <Container maxWidth="md">
+          <Paper
+            elevation={0}
+            sx={{
+              p: { xs: 4, md: 6 },
+              textAlign: 'center',
+              border: `2px solid ${colors.primary.main}`,
+              borderRadius: 4,
+              bgcolor: 'white',
+            }}
+          >
+            <Typography variant="h4" gutterBottom sx={{ fontWeight: 700, mb: 3 }}>
+              {language === 'en' ? '🌍 Bilingual Support' : '🌍 دو زبانی سپورٹ'}
+            </Typography>
+            <Typography variant="h6" color="text.secondary" sx={{ mb: 4, fontWeight: 400 }}>
+              {language === 'en'
+                ? 'Switch between English and Urdu instantly. Every explanation available in both languages.'
+                : 'انگریزی اور اردو کے درمیان فوری طور پر سوئچ کریں۔ ہر وضاحت دونوں زبانوں میں دستیاب ہے۔'}
+            </Typography>
+            <Stack direction="row" spacing={2} justifyContent="center" alignItems="center">
+              <Box
+                sx={{
+                  px: 3,
+                  py: 1.5,
+                  bgcolor: language === 'en' ? colors.primary.main : colors.background.subtle,
+                  color: language === 'en' ? 'white' : 'text.primary',
+                  borderRadius: 2,
+                  fontWeight: 600,
+                }}
+              >
+                English
+              </Box>
+              <Typography variant="h6" color="text.secondary">↔</Typography>
+              <Box
+                sx={{
+                  px: 3,
+                  py: 1.5,
+                  bgcolor: language === 'ur' ? colors.primary.main : colors.background.subtle,
+                  color: language === 'ur' ? 'white' : 'text.primary',
+                  borderRadius: 2,
+                  fontWeight: 600,
+                }}
+              >
+                اردو
+              </Box>
+            </Stack>
+          </Paper>
+        </Container>
+      </Box>
 
       {/* Benefits Section */}
       <Box sx={{ bgcolor: colors.background.subtle, py: 8, mb: 8 }}>

@@ -32,11 +32,11 @@ export class ConsultationRepository {
   }
 
   /**
-   * Find consultation by ID
+   * Find consultation by ID (with user authorization)
    */
-  async findById(id: string): Promise<Consultation | null> {
-    const query = 'SELECT * FROM consultations WHERE id = $1';
-    const result = await db.query<Consultation>(query, [id]);
+  async findById(id: string, userId: string): Promise<Consultation | null> {
+    const query = 'SELECT * FROM consultations WHERE id = $1 AND user_id = $2';
+    const result = await db.query<Consultation>(query, [id, userId]);
     return result.rows[0] || null;
   }
 
@@ -94,12 +94,12 @@ export class ConsultationRepository {
   }
 
   /**
-   * Delete consultation
+   * Delete consultation (with user authorization)
    */
-  async delete(id: string): Promise<boolean> {
-    const query = 'DELETE FROM consultations WHERE id = $1';
-    const result = await db.query(query, [id]);
-    logger.info('Consultation deleted', { consultationId: id });
+  async delete(id: string, userId: string): Promise<boolean> {
+    const query = 'DELETE FROM consultations WHERE id = $1 AND user_id = $2';
+    const result = await db.query(query, [id, userId]);
+    logger.info('Consultation deleted', { consultationId: id, userId });
     return (result.rowCount || 0) > 0;
   }
 }

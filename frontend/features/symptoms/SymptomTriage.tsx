@@ -299,6 +299,73 @@ export const SymptomTriage: React.FC = () => {
               </Paper>
             )}
 
+            {/* Language Switcher */}
+            <Paper 
+              elevation={0} 
+              sx={{ 
+                p: 3,
+                border: `1px solid ${colors.border.main}`,
+                borderRadius: 3,
+                bgcolor: colors.background.subtle,
+                textAlign: 'center',
+              }}
+            >
+              <Typography variant="body1" sx={{ mb: 2, fontWeight: 500 }}>
+                {language === 'en' 
+                  ? '🌍 See this in another language:'
+                  : '🌍 دوسری زبان میں دیکھیں:'}
+              </Typography>
+              <Stack direction="row" spacing={2} justifyContent="center">
+                <Button
+                  variant={language === 'en' ? 'contained' : 'outlined'}
+                  onClick={() => language !== 'en' && window.location.reload()}
+                  sx={{ borderRadius: 2, minWidth: 100 }}
+                >
+                  English
+                </Button>
+                <Button
+                  variant={language === 'ur' ? 'contained' : 'outlined'}
+                  onClick={() => language !== 'ur' && window.location.reload()}
+                  sx={{ borderRadius: 2, minWidth: 100 }}
+                >
+                  اردو
+                </Button>
+              </Stack>
+            </Paper>
+
+            {/* Care Navigation - WOW MOMENT */}
+            <Paper 
+              elevation={0} 
+              sx={{ 
+                p: 4,
+                border: `2px solid ${colors.primary.main}`,
+                borderRadius: 3,
+                bgcolor: colors.primary[50],
+              }}
+            >
+              <Typography variant="h5" sx={{ fontWeight: 700, mb: 2, textAlign: 'center' }}>
+                {language === 'en' ? '💡 What should I do next?' : '💡 مجھے آگے کیا کرنا چاہیے؟'}
+              </Typography>
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="center">
+                <Button
+                  variant="contained"
+                  size="large"
+                  onClick={() => navigate('/lab')}
+                  sx={{ borderRadius: 2, fontWeight: 600, px: 4 }}
+                >
+                  {language === 'en' ? 'Analyze Lab Report' : 'لیب رپورٹ کا تجزیہ کریں'}
+                </Button>
+                <Button
+                  variant="outlined"
+                  size="large"
+                  onClick={handleReset}
+                  sx={{ borderRadius: 2, fontWeight: 600, px: 4 }}
+                >
+                  {language === 'en' ? 'Check Another Symptom' : 'دوسری علامت چیک کریں'}
+                </Button>
+              </Stack>
+            </Paper>
+
             {/* Disclaimer */}
             <Alert severity="info" sx={{ borderRadius: 2 }}>
               {result.disclaimer}
@@ -307,16 +374,9 @@ export const SymptomTriage: React.FC = () => {
             {/* Actions */}
             <Stack direction="row" spacing={2} justifyContent="center">
               <Button
-                variant="outlined"
-                onClick={handleReset}
-                sx={{ borderRadius: 2, px: 4 }}
-              >
-                {language === 'en' ? 'Check Another Symptom' : 'دوسری علامت چیک کریں'}
-              </Button>
-              <Button
-                variant="contained"
+                variant="text"
                 onClick={() => navigate('/dashboard')}
-                sx={{ borderRadius: 2, px: 4 }}
+                sx={{ borderRadius: 2 }}
               >
                 {language === 'en' ? 'Back to Dashboard' : 'ڈیش بورڈ پر واپس'}
               </Button>
